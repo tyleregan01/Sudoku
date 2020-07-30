@@ -2,6 +2,11 @@
 
 import java.awt.Color;
 
+/**
+ * Small class to hold styles for cells.
+ * 
+ * @author Tyler Egan
+ */
 public class CellStyle {
 	
 	public boolean editable;

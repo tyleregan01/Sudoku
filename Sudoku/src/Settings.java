@@ -8,6 +8,9 @@
 public class Settings {
 	private boolean markDuplicates;
 	
+	/**
+	 * Constructor
+	 */
 	public Settings() {
 		markDuplicates = false;
 	}
@@ -19,6 +22,11 @@ public class Settings {
 		markDuplicates = !markDuplicates;
 	}
 	
+	/**
+	 * Returns whether duplicates should be marked or not.
+	 * 
+	 * @return true or false
+	 */
 	public boolean getMarkDuplicates() {
 		return markDuplicates;
 	}
