@@ -63,7 +63,7 @@ public class SudokuApp {
 		JCheckBoxMenuItem markEmpty = new JCheckBoxMenuItem("Mark Empty Cells");
 		//Other components.
 		JPanel gameWindow = new JPanel();
-		JPanel[] grid = new JPanel[9];
+		JPanel[] box = new JPanel[9];
 		cells = new CellField[9][9];
 		
 		/* Update Components */
@@ -95,7 +95,6 @@ public class SudokuApp {
 			}
 			
 		});
-		markEmpty.setSelected(true);
 		markEmpty.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -122,25 +121,35 @@ public class SudokuApp {
 		gameWindow.setBorder(BorderFactory.createLineBorder(Color.black));
 		
 		//Create and format boxes and cells and add to game window.
-		for(int box = 0; box < 9; box++) {
-			grid[box] = new JPanel();
-			grid[box].setLayout(new GridLayout(3,3));
-			grid[box].setBorder(BorderFactory.createLineBorder(Color.black));
-			for(int boxCellNum = 0; boxCellNum < 9; boxCellNum++) {
-				cells[box][boxCellNum] = new CellField(box, boxCellNum);
-				setPermStyle(cells[box][boxCellNum]); //Style settings that will never change.
-				setTempStyle(cells[box][boxCellNum], emptyCellStyle); //Style settings that can change.
-				grid[box].add(cells[box][boxCellNum]);
-				addCellListener(cells[box][boxCellNum]);
+		for(int row = 0; row < 9; row++) {
+			for(int column = 0; column < 9; column++) {
+				cells[row][column] = new CellField(row, column);
+				setPermStyle(cells[row][column]); //Style settings that will never change.
+				setTempStyle(cells[row][column], emptyCellStyle); //Style settings that can change.
+				addCellListener(cells[row][column]);
 			}
-			gameWindow.add(grid[box]);
+		}
+		
+		for(int boxNum = 0; boxNum < 9; boxNum++) {
+			box[boxNum] = new JPanel();
+			box[boxNum].setLayout(new GridLayout(3,3));
+			box[boxNum].setBorder(BorderFactory.createLineBorder(Color.black));
+			int start = boxNum/3 * 3; //Results in 0, 3, and 6
+			int end = start + 3;
+			int column = (boxNum%3)*3; //Results in 0, 3, and 6 at different times.
+			for(int row = start; row < end; row++) {
+				box[boxNum].add(cells[row][column]);
+				box[boxNum].add(cells[row][column+1]);
+				box[boxNum].add(cells[row][column+2]);
+			}
+			gameWindow.add(box[boxNum]);
 		}
 		
 		//Add components to frame
 		mainFrame.getContentPane().add(BorderLayout.NORTH, menu);
 		mainFrame.getContentPane().add(BorderLayout.CENTER, gameWindow);
 		
-		mainFrame.setVisible(true);
+		mainFrame.setVisible(true);		
 		
 	}
 	
@@ -255,24 +264,6 @@ public class SudokuApp {
 			}
 			if(state.equals("beginner")) {
 				
-				cells[0][0].setText("1");
-				setTempStyle(cells[0][0], startCellStyle);
-				cells[0][4].setText("2");
-				setTempStyle(cells[0][4], startCellStyle);
-				cells[0][8].setText("3");
-				setTempStyle(cells[0][8], startCellStyle);
-				cells[4][0].setText("4");
-				setTempStyle(cells[4][0], startCellStyle);
-				cells[4][4].setText("5");
-				setTempStyle(cells[4][4], startCellStyle);
-				cells[4][8].setText("6");
-				setTempStyle(cells[4][8], startCellStyle);
-				cells[8][0].setText("7");
-				setTempStyle(cells[8][0], startCellStyle);
-				cells[8][4].setText("8");
-				setTempStyle(cells[8][4], startCellStyle);
-				cells[8][8].setText("9");
-				setTempStyle(cells[8][8], startCellStyle);
 			}
 		}
 	}

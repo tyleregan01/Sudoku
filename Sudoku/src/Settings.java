@@ -14,7 +14,7 @@ public class Settings {
 	 */
 	public Settings() {
 		markDuplicates = true;
-		markEmpty = true;
+		markEmpty = false;
 	}
 	
 	/**
