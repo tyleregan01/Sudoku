@@ -125,7 +125,11 @@ public class SudokuApp {
 			for(int column = 0; column < 9; column++) {
 				cells[row][column] = new CellField(row, column);
 				setPermStyle(cells[row][column]); //Style settings that will never change.
-				setTempStyle(cells[row][column], emptyCellStyle); //Style settings that can change.
+				if(sudokuSettings.getMarkEmpty()) {
+					setTempStyle(cells[row][column], emptyCellStyle); //Style settings that can change.
+				} else {
+					setTempStyle(cells[row][column], normalCellStyle); //Style settings that can change.
+				}
 				addCellListener(cells[row][column]);
 			}
 		}
