@@ -53,32 +53,69 @@ public class SudokuApp {
 		JMenu gameMenu = new JMenu("Game");
 		JMenu optionsMenu = new JMenu("Options");
 		//Game menu items.
-		JMenuItem newGame = new JMenuItem("New Game");
+		JMenu newGame = new JMenu("New Game");
+		JMenuItem beginnerGame = new JMenuItem("Beginner Game");
+		JMenuItem intermediateGame = new JMenuItem("Intermediate Game");
+		JMenuItem expertGame = new JMenuItem("Expert Game");
+		JMenuItem blankGame = new JMenuItem("Blank Game");
 		//Options menu items.
 		JCheckBoxMenuItem markDuplicates = new JCheckBoxMenuItem("Mark Duplicates");
+		JCheckBoxMenuItem markEmpty = new JCheckBoxMenuItem("Mark Empty Cells");
 		//Other components.
 		JPanel gameWindow = new JPanel();
 		JPanel[] grid = new JPanel[9];
 		cells = new CellField[9][9];
 		
 		/* Update Components */
-		//Set up Frame.
+		//Frame
 		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		mainFrame.setSize(450, 450);
+		//Game menu.
+		beginnerGame.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				clearCells("beginner");
+			}
+			
+		});
+		blankGame.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				clearCells("blank");
+			}
+			
+		});
+		//Options menu.
+		markDuplicates.setSelected(true);
+		markDuplicates.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				sudokuSettings.updateMarkDuplicates();
+				updateCells();
+			}
+			
+		});
+		markEmpty.setSelected(true);
+		markEmpty.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				sudokuSettings.updateMarkEmpty();
+				updateCells();
+			}
+			
+		});
 		
 		//Add items to menus.
+		newGame.add(beginnerGame);
+		newGame.add(intermediateGame);
+		newGame.add(expertGame);
+		newGame.add(blankGame);
 		gameMenu.add(newGame);
 		optionsMenu.add(markDuplicates);
+		optionsMenu.add(markEmpty);
 		//Add menus to toolbar.
 		menu.add(gameMenu);
 		menu.add(optionsMenu);
-		//add listeners to menu items.
-		newGame.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				clearCells();
-			}
-		});
 		
 		//Set up game window
 		gameWindow.setLayout(new GridLayout(3,3));
@@ -142,7 +179,11 @@ public class SudokuApp {
 			 */
 			@Override
 			public void removeUpdate(DocumentEvent documentEvent) {
-				setTempStyle((JTextField) cell, emptyCellStyle);
+				if(sudokuSettings.getMarkEmpty()) {
+					setTempStyle((JTextField) cell, emptyCellStyle);
+				} else {
+					setTempStyle((JTextField) cell, normalCellStyle);
+				}
 			}
 
 			/**
@@ -164,19 +205,25 @@ public class SudokuApp {
 			 */
 			private void removeText(JTextField cell, int start, int end) {
 				//Use runnable to avoid illegal state exceptions.
-				SwingUtilities.invokeLater(new Runnable() {
-					public void run() {
-						//If there is only 1 value, set to empty string and empty style.
-						if(cell.getText().length() == 1) {
-							cell.setText("");
-							setTempStyle((JTextField) cell, emptyCellStyle);
+				
+					SwingUtilities.invokeLater(new Runnable() {
+						public void run() {
+							try {
+								//If there is only 1 value, set to empty string and empty style.
+								if(cell.getText().length() == 1) {
+									cell.setText("");
+									setTempStyle((JTextField) cell, emptyCellStyle);
+								}
+								else {
+									cell.setText(cell.getText().substring(start, end));
+									setTempStyle((JTextField) cell, normalCellStyle);
+								}
+							} catch (StringIndexOutOfBoundsException e) {
+								//Do nothing. It's fine.
+							}
 						}
-						else {
-							cell.setText(cell.getText().substring(start, end));
-							setTempStyle((JTextField) cell, normalCellStyle);
-						}
-					}
-				});
+					});
+				
 			}
 		});
 		
@@ -189,11 +236,43 @@ public class SudokuApp {
 	/**
 	 * Reset all cells to empty for a new game.
 	 */
-	private static void clearCells() {
-		for(int i = 0; i < 9; i++) {
-			for(int j = 0; j < 9; j++) {
-				cells[i][j].setText("");
-				setTempStyle(cells[i][j], emptyCellStyle);
+	private static void clearCells(String state) {
+		
+		//Reset board to try puzzle again.
+		if(state.equals("reset")) {
+			//TODO
+		} else {
+			for(int i = 0; i < 9; i++) {
+				for(int j = 0; j < 9; j++) {
+					cells[i][j].setText("");
+					if(sudokuSettings.getMarkEmpty()) {
+						setTempStyle(cells[i][j], emptyCellStyle);
+					} else {
+						setTempStyle(cells[i][j], normalCellStyle);
+					}
+					
+				}
+			}
+			if(state.equals("beginner")) {
+				
+				cells[0][0].setText("1");
+				setTempStyle(cells[0][0], startCellStyle);
+				cells[0][4].setText("2");
+				setTempStyle(cells[0][4], startCellStyle);
+				cells[0][8].setText("3");
+				setTempStyle(cells[0][8], startCellStyle);
+				cells[4][0].setText("4");
+				setTempStyle(cells[4][0], startCellStyle);
+				cells[4][4].setText("5");
+				setTempStyle(cells[4][4], startCellStyle);
+				cells[4][8].setText("6");
+				setTempStyle(cells[4][8], startCellStyle);
+				cells[8][0].setText("7");
+				setTempStyle(cells[8][0], startCellStyle);
+				cells[8][4].setText("8");
+				setTempStyle(cells[8][4], startCellStyle);
+				cells[8][8].setText("9");
+				setTempStyle(cells[8][8], startCellStyle);
 			}
 		}
 	}
@@ -219,6 +298,25 @@ public class SudokuApp {
         cell.setEditable(styles.editable);
         cell.setBackground(styles.bgColor);
         cell.setForeground(styles.fgColor);
+	}
+	
+	/**
+	 * Update the styles of all cells based on settings.
+	 */
+	private static void updateCells() {
+		String curText;
+		for(int i = 0; i < 9; i++) {
+			for (int j = 0; j < 9; j++) {
+				curText = cells[i][j].getText();
+				if(curText.equals("")) {
+					if(sudokuSettings.getMarkEmpty()) {
+						setTempStyle(cells[i][j], emptyCellStyle);
+					} else {
+						setTempStyle(cells[i][j], normalCellStyle);
+					}
+				}
+			}
+		}
 	}
 }
 

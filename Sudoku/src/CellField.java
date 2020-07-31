@@ -13,6 +13,7 @@ public class CellField extends JTextField {
 	private static final long serialVersionUID = -4715287002563915673L;
 	private int boxNum;
 	private int cellNum;
+	private String style;
 
 	/**
 	 * Constructor
@@ -42,5 +43,23 @@ public class CellField extends JTextField {
 	 */
 	public int getCellNum() {
 		return cellNum;
+	}
+
+	/**
+	 * Getter for the current style applied to his CellField
+	 * 
+	 * @return The current style
+	 */
+	public String getStyle() {
+		return style;
+	}
+	
+	/**
+	 * Setter for the current style applied to his CellField
+	 * 
+	 * @param style The style applied to this CellField
+	 */
+	public void setStyle(String style) {
+		this.style = style;
 	}
 }
