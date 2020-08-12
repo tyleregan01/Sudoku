@@ -11,9 +11,11 @@ public class CellField extends JTextField {
 	 * Automatically generated UID
 	 */
 	private static final long serialVersionUID = -4715287002563915673L;
-	private int boxNum;
-	private int cellNum;
+	private int box;
+	private int column;
+	private int row;
 	private String style;
+	private String prevNumber;
 
 	/**
 	 * Constructor
@@ -21,28 +23,47 @@ public class CellField extends JTextField {
 	 * @param box The box this CellField resides in.
 	 * @param cell The cell this CellField resides in.
 	 */
-	public CellField(int box, int cell) {
+	public CellField(int row, int column) {
 		super();
-		boxNum = box;
-		cellNum = cell;
+		this.column = column;
+		this.row = row;
+		this.prevNumber = "";
 	}
 	
 	/**
-	 * Returns the box this CellField is in.
+	 * Returns the box this cell is in.
 	 * 
 	 * @return box number.
 	 */
-	public int getBoxNum() {
-		return boxNum;
+	public int getBox() {
+		return box;
 	}
 	
 	/**
-	 * Returns the cell this CellField is in.
+	 * Returns the column this cell is in.
 	 * 
-	 * @return cell number.
+	 * @return column number
 	 */
-	public int getCellNum() {
-		return cellNum;
+	public int getColumn() {
+		return column;
+	}
+	
+	/**
+	 * The last number that was in this cell.
+	 * 
+	 * @return The previous number
+	 */
+	public String getPrevNumber() {
+		return prevNumber;
+	}
+	
+	/**
+	 * Returns the row this cell is in.
+	 * 
+	 * @return row number.
+	 */
+	public int getRow() {
+		return row;
 	}
 
 	/**
@@ -52,6 +73,24 @@ public class CellField extends JTextField {
 	 */
 	public String getStyle() {
 		return style;
+	}
+	
+	/**
+	 * Set the box this cell is in.
+	 * 
+	 * @param box The box number this cell is in.
+	 */
+	public void setBox(int box) {
+		this.box = box;
+	}
+	
+	/**
+	 * Set the number that is currently in this cell so it's available when a new number is added.
+	 * 
+	 * @param number The number to set.
+	 */
+	public void setPrevNumber(String number) {
+		prevNumber = number;
 	}
 	
 	/**
