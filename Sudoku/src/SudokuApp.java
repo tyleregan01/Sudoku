@@ -6,6 +6,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Random;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -19,6 +21,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
@@ -34,6 +37,7 @@ public class SudokuApp {
 	
 	/* Globals */
 	private static CellField[][] cells;
+	private static JFrame mainFrame;
 	
 	//Holds color and editable status for cells
 	private static final CellStyle normalCellStyle = new CellStyle("normalCellStyle", true, new Color(240, 240, 240), new Color(10, 10, 10));
@@ -41,6 +45,7 @@ public class SudokuApp {
 	private static final CellStyle emptyCellStyle = new CellStyle("emptyCellStyle", true, new Color(225, 225, 0), new Color(10, 10, 10));
 	private static final CellStyle startCellStyle = new CellStyle("startCellStyle", false, new Color(200, 200, 200), new Color(10, 10, 10));
 	
+	private static BoardState curBoard;
 	private static Logger log;
 	private static Settings sudokuSettings;
 
@@ -52,7 +57,7 @@ public class SudokuApp {
 	public static void main(String[] args) {
 		
 		/* Initialize objects */
-		sudokuSettings = new Settings();
+		
 		try {
 			log = Logger.getLogger("SudokuApp.Log");
 			LogManager.getLogManager().reset();
@@ -69,9 +74,11 @@ public class SudokuApp {
 			//Auto-generated catch block
 			e1.printStackTrace();
 		}
+		sudokuSettings = new Settings();
+		curBoard = new BoardState(log);
 		
 		/* Initialize components */
-		JFrame mainFrame = new JFrame("Sudoku");
+		mainFrame = new JFrame("Sudoku");
 		JMenuBar menu = new JMenuBar();
 		// Main Menus.
 		JMenu gameMenu = new JMenu("Game");
@@ -82,6 +89,7 @@ public class SudokuApp {
 		JMenuItem intermediateGame = new JMenuItem("Intermediate Game");
 		JMenuItem expertGame = new JMenuItem("Expert Game");
 		JMenuItem blankGame = new JMenuItem("Blank Game");
+		JPopupMenu settings = new JPopupMenu("Settings");
 		//Options menu items.
 		JCheckBoxMenuItem markDuplicates = new JCheckBoxMenuItem("Mark Duplicates");
 		JCheckBoxMenuItem markEmpty = new JCheckBoxMenuItem("Mark Empty Cells");
@@ -100,14 +108,14 @@ public class SudokuApp {
 		beginnerGame.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				clearCells("beginner");
+				newBoard("beginner");
 			}
 			
 		});
 		blankGame.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				clearCells("blank");
+				newBoard("blank");
 			}
 			
 		});
@@ -138,6 +146,7 @@ public class SudokuApp {
 		newGame.add(expertGame);
 		newGame.add(blankGame);
 		gameMenu.add(newGame);
+		gameMenu.add(settings);
 		optionsMenu.add(markDuplicates);
 		optionsMenu.add(markEmpty);
 		//Add menus to toolbar.
@@ -167,21 +176,19 @@ public class SudokuApp {
 		
 		log.config("Cells created");
 		
+		//create and populate boxes.
 		for(int boxNum = 0; boxNum < 9; boxNum++) {
 			box[boxNum] = new JPanel();
 			box[boxNum].setLayout(new GridLayout(3,3));
 			box[boxNum].setBorder(BorderFactory.createLineBorder(Color.black));
-			int start = boxNum/3 * 3; //Results in 0, 3, and 6
-			int end = start + 3;
-			int column = (boxNum%3)*3; //Results in 0, 3, and 6 at different times.
-			for(int row = start; row < end; row++) {
-				box[boxNum].add(cells[row][column]);
-				box[boxNum].add(cells[row][column+1]);
-				box[boxNum].add(cells[row][column+2]);
-				cells[row][column].setBox(boxNum);
-				cells[row][column+1].setBox(boxNum);
-				cells[row][column+2].setBox(boxNum);
-								
+			int rowStart = boxNum/3 * 3; //Results in 0, 3, and 6
+			int columnStart = (boxNum%3)*3; //Results in 0, 3, and 6 at different times.
+			//Populate boxes.
+			for(int row = rowStart; row < rowStart+3; row++) {
+				for(int column = columnStart; column < columnStart+3; column++) {
+					box[boxNum].add(cells[row][column]);
+					cells[row][column].setBox(boxNum);
+				}
 			}
 			gameWindow.add(box[boxNum]);
 		}
@@ -222,6 +229,7 @@ public class SudokuApp {
 					if (!("123456789".contains(cell.getText()))) {
 						log.fine("\tNot a number, remove text.");
 						removeText(cell, 0, 1);
+						return;
 					} else {
 						if(sudokuSettings.getMarkDuplicates()) {
 							log.fine("\tCheck cells for duplicates.");
@@ -230,6 +238,7 @@ public class SudokuApp {
 							log.fine("\tLength 1, don't mark duplicates");
 							setTempStyle(cell, normalCellStyle);
 						}
+						
 					}
 				} else if (length > 1) { // Force max length of 1
 					log.fine("\tText length > 1. Forcing length to 1.");
@@ -263,7 +272,7 @@ public class SudokuApp {
 						log.fine("\t\tMark empties");
 						setTempStyle(cell, emptyCellStyle);
 					} else {
-						log.fine("\t\tDont' mark empties");
+						log.fine("\t\tDon't mark empties");
 						setTempStyle(cell, normalCellStyle);
 					}
 				}
@@ -289,29 +298,19 @@ public class SudokuApp {
 			 * @param end The character to stop at.
 			 */
 			private void removeText(CellField cell, int start, int end) {
+				log.info("\t\tRemoveText()");
+				//If there is only 1 value, set to empty string and empty style.
+				if(cell.getText().length() == 1) {
+					log.fine("\t\tLength is 1");
+					setCellNumber(cell.getRow(), cell.getColumn(), "");
+				}
+				else {
+					log.fine("\t\tLength was greater than 1");
+					String newText = cell.getText().substring(start, end);
+					setCellNumber(cell.getRow(), cell.getColumn(), newText);
+				}
 				
-				//Use runnable to avoid illegal state exceptions.
-				SwingUtilities.invokeLater(new Runnable() {
-					public void run() {
-						try {
-							log.info("\t\tRemoveText()");
-							//If there is only 1 value, set to empty string and empty style.
-							if(cell.getText().length() == 1) {
-								log.fine("\t\tLength is 1");
-								cell.setText("");
-							}
-							else {
-								log.fine("\t\tLength was greater than 1");
-								String newText = cell.getText().substring(start, end);
-								cell.setText(newText);
-							}
-						} catch (StringIndexOutOfBoundsException e) {
-							//Do nothing. It's fine.
-						}
-						log.fine("\tCell " + cell.getRow() + "," + cell.getColumn() + " previous number set to: " + cell.getText());
-						cell.setPrevNumber(cell.getText());
-					}
-				});
+				log.fine("\tCell " + cell.getRow() + "," + cell.getColumn() + " previous number set to: " + cell.getText());
 			}
 		});
 	}
@@ -377,12 +376,14 @@ public class SudokuApp {
 	/**
 	 * Reset all cells to empty for a new game.
 	 */
-	private static void clearCells(String state) {
-		
+	private static void newBoard(String difficulty) {
+		log.info("Create new board");
+		mainFrame.setEnabled(false);
 		//Reset board to try puzzle again.
-		if(state.equals("reset")) {
+		if(difficulty.equals("reset")) {
 			//TODO
 		} else {
+			log.fine("Clear board");
 			for(int i = 0; i < 9; i++) {
 				for(int j = 0; j < 9; j++) {
 					cells[i][j].setText("");
@@ -391,13 +392,62 @@ public class SudokuApp {
 					} else {
 						setTempStyle(cells[i][j], normalCellStyle);
 					}
-					
 				}
 			}
-			if(state.equals("beginner")) {
-				
+			log.fine("Board cleared");
+			//Fill cells...how?
+			int cellsToFill = 0;
+			if(difficulty.equals("beginner")) {
+				cellsToFill = 50;
+			} else if(difficulty.equals("intermediate")) {
+				cellsToFill = 40;
+			} else if(difficulty.equals("expert")) {
+				cellsToFill = 30;
+			}
+			log.fine("Fill " + cellsToFill + " cells");
+			int row = 0;
+			int column = 0;
+			Random rand = new Random();
+			HashSet<Integer> cellSet = new HashSet<Integer>();
+			int finalIndex = 0;
+			int curIndex = 0;
+			int newNum = 0;
+			String curText = "2"; //Can be anything except empty string or null.
+			//Fill cells
+			for(int i = 0; i < cellsToFill; i++) {
+				//Keep picking new random positions until the cell is empty.
+				while(!curText.equals("")) {
+					row = rand.nextInt(9);
+					column = rand.nextInt(9);
+					curText = cells[row][column].getText();
+				}
+				log.finer("\tFill cell " + row + "," + column);
+				//Current row and column value are for an empty cell.
+				cellSet = curBoard.getCellSet(row, column);
+				log.fine("\t\tCell set: " + cellSet);
+				finalIndex = rand.nextInt(cellSet.size());
+				curIndex = 0;
+				for(int num:cellSet) {
+					if(curIndex==finalIndex) {
+						newNum = num;
+						break;
+					}
+					curIndex++;
+				}
+				log.finer("\tWith value " + newNum);
+				try {
+					curBoard.newNumberUpdate(row, column, "" + newNum);
+					cells[row][column].setText("" + newNum);
+					log.fine("\t\tCell " + row + "," + column + " set to text:" + newNum);
+				} catch(Exception e) {
+					System.out.println("Update exception catching for newBoard");
+					System.out.println(e.getMessage());
+				}
+				curText = "" + newNum;
 			}
 		}
+		log.info("New board finished\n");
+		mainFrame.setEnabled(true);
 	}
 	
 	/**
@@ -516,12 +566,10 @@ public class SudokuApp {
 		}
 		
 		//Run box checks
-		int rowStart = box/3 * 3; //Smallest row number
-		int rowEnd = rowStart + 3; //Last row number
-		int columnStart = (box%3)*3; //Smallest column number
-		int columnEnd = columnStart + 3; //Last column number
-		for(int curRow = rowStart; curRow < rowEnd; curRow++) {
-			for(int curColumn = columnStart; curColumn < columnEnd; curColumn++) {
+		int rowStart = (row/3)*3;
+		int columnStart = (column/3)*3;
+		for(int curRow = rowStart; curRow < rowStart+3; curRow++) {
+			for(int curColumn = columnStart; curColumn < columnStart+3; curColumn++) {
 				if(usePrevNumber) {
 					if(numbersSame(prevNum, curRow, curColumn)) {
 						duplicateRows.add(curRow);
@@ -548,6 +596,24 @@ public class SudokuApp {
 			duplicateColumns.clear();
 		}
 		
+	}
+	
+	private static void setCellNumber(int row, int column, String newText) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					if(!newText.equals("")) {
+						curBoard.newNumberUpdate(row, column, newText);
+					} else {
+						curBoard.removeUpdate(cells, row, column);
+					}
+					cells[row][column].setText(newText);
+					log.fine("\t\tCell " + row + "," + column + " set to text:" + newText);
+				} catch (StringIndexOutOfBoundsException e) {
+					//Do nothing. It's fine.
+				}
+			}
+		});
 	}
 	
 	/**
