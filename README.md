@@ -1,5 +1,5 @@
 # Goal
-A sudoku application and sudoku solver to showcase code I have written.
+Create a full sudoku application to keep coding knowledge fresh.
 
 # Progress
 1. I started off with an application that forced single numbers in each cell.
