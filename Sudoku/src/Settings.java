@@ -8,6 +8,7 @@
 public class Settings {
 	private boolean markDuplicates;
 	private boolean markEmpty;
+	private boolean unique;
 	
 	/**
 	 * Constructor
@@ -15,13 +16,7 @@ public class Settings {
 	public Settings() {
 		markDuplicates = true;
 		markEmpty = false;
-	}
-	
-	/**
-	 * Switch the markDuplicates setting.
-	 */
-	public void updateMarkDuplicates() {
-		markDuplicates = !markDuplicates;
+		unique = false;
 	}
 	
 	/**
@@ -34,6 +29,31 @@ public class Settings {
 	}
 	
 	/**
+	 * Returns whether Empty should be marked or not.
+	 * 
+	 * @return true or false
+	 */
+	public boolean getMarkEmpty() {
+		return markEmpty;
+	}
+	
+	/**
+	 * Returns whether boards must be unique or not.
+	 * 
+	 * @return true or false
+	 */
+	public boolean getUnique() {
+		return unique;
+	}
+	
+	/**
+	 * Switch the markDuplicates setting.
+	 */
+	public void updateMarkDuplicates() {
+		markDuplicates = !markDuplicates;
+	}
+	
+	/**
 	 * Switch the markEmpty setting.
 	 */
 	public void updateMarkEmpty() {
@@ -41,11 +61,9 @@ public class Settings {
 	}
 	
 	/**
-	 * Returns whether Empty should be marked or not.
-	 * 
-	 * @return true or false
+	 * Switch the unique settings.
 	 */
-	public boolean getMarkEmpty() {
-		return markEmpty;
+	public void updateUnique() {
+		unique = !unique;
 	}
 }

@@ -123,4 +123,15 @@ public class BoardState {
 			boxSet.get(cells[row][column].getBox()).add(Integer.parseInt(removedNum));
 		}
 	}
+	
+	/**
+	 * Reset the board to a new empty board.
+	 */
+	public void reset() {	
+		for(int i = 0; i < 9; i++) {
+			boxSet.set(i, new HashSet<Integer>(fullSet));
+			columnSet.set(i, new HashSet<Integer>(fullSet));
+			rowSet.set(i, new HashSet<Integer>(fullSet));
+		}
+	}
 }

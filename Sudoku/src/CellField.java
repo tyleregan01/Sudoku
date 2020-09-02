@@ -27,7 +27,8 @@ public class CellField extends JTextField {
 		super();
 		this.column = column;
 		this.row = row;
-		this.prevNumber = "";
+		prevNumber = "";
+		style = "";
 	}
 	
 	/**

@@ -9,7 +9,6 @@ import java.awt.Color;
  */
 public class CellStyle {
 	
-	public boolean editable;
 	public Color bgColor;
 	public Color fgColor;
 	public String name;
@@ -18,9 +17,8 @@ public class CellStyle {
 	/**
 	 * Constructor
 	 */
-	public CellStyle(String name, boolean edit, Color bg, Color fg) {
+	public CellStyle(String name, Color bg, Color fg) {
 		this.name = name;
-		editable = edit;
 		bgColor = bg;
 		fgColor = fg;
 	}
