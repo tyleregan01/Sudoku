@@ -11,17 +11,17 @@ Create a full sudoku application to keep coding knowledge fresh.
 7. Successfully solved random boards and removed cells based on difficulty. Cells are removed at random and it is not garunteed to have only 1 win state.
 
 # TODO
-1. Unique random boards - Create boards that have only 1 solution.
-2. "Reset"/"Retry" - save board states so a player can retry the same board.
-3. "Mark Correct Cells" - Add another option for showing when the correct value is placed in a cell. Will be exclusive for unique boards.
-4. Clock timer - Add a timer to track how long it takes a player to finish.
-5. Statistics - Track games played, games finished, mistakes, etc. 
-6. Success Message - Add a message area at the bottom to congratulate the player when a board is solved.
-7. Random difficulty count - Use a range to randomize how many cells are removed for each difficulty.
-8. "Special Boards" - Create a file containing patterned or other interesting boards and allow that as a "difficulty".
-9. Menu Redesign - Change game menu to have difficulty as a check item like Minesweeper's menu.
-10. "Help" Menu - Menu with options for explaining how sudoku works and what each option in the game does.
-11. Refactor - Refactor code every few steps to ensure well organized code.
+* Unique random boards - Create boards that have only 1 solution.
+* "Reset"/"Retry" - save board states so a player can retry the same board.
+* "Mark Correct Cells" - Add another option for showing when the correct value is placed in a cell. Will be exclusive for unique boards.
+* Clock timer - Add a timer to track how long it takes a player to finish.
+*. Statistics - Track games played, games finished, mistakes, etc. 
+* Success Message - Add a message area at the bottom to congratulate the player when a board is solved.
+* Random difficulty count - Use a range to randomize how many cells are removed for each difficulty.
+* "Special Boards" - Create a file containing patterned or other interesting boards and allow that as a "difficulty".
+* Menu Redesign - Change game menu to have difficulty as a check item like Minesweeper's menu.
+* "Help" Menu - Menu with options for explaining how sudoku works and what each option in the game does.
+* Refactor - Refactor code every few steps to ensure well organized code.
 
 # Known Bugs
 1. If cell x creates bad cells and a cell other than x is changed from bad to good, color update can be wrong (Caused by how the check is done).
