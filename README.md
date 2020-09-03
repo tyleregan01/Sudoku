@@ -24,4 +24,4 @@ Create a full sudoku application to keep coding knowledge fresh.
 11. Refactor - Refactor code every few steps to ensure well organized code.
 
 # Known Bugs
-1. If cell x creates 3 bad cells and a cell other than x is changed from bad to good, color update can be wrong (Caused by how the check is done).
+1. If cell x creates bad cells and a cell other than x is changed from bad to good, color update can be wrong (Caused by how the check is done).
