@@ -9,6 +9,7 @@ public class Settings {
 	private boolean markDuplicates;
 	private boolean markEmpty;
 	private boolean unique;
+	private String activeDifficulty;
 	
 	/**
 	 * Constructor
@@ -17,6 +18,16 @@ public class Settings {
 		markDuplicates = true;
 		markEmpty = false;
 		unique = false;
+		activeDifficulty = "beginner";
+	}
+	
+	/**
+	 * Getter for active difficulty.
+	 * 
+	 * @return The active difficulty
+	 */
+	public String getActiveDifficulty() {
+		return activeDifficulty;
 	}
 	
 	/**
@@ -44,6 +55,15 @@ public class Settings {
 	 */
 	public boolean getUnique() {
 		return unique;
+	}
+	
+	/**
+	 * Setter for active difficulty.
+	 * 
+	 * @param newDifficulty The active difficulty
+	 */
+	public void setActiveDifficulty(String newDifficulty) {
+		activeDifficulty = newDifficulty;
 	}
 	
 	/**

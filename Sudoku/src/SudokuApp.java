@@ -39,6 +39,10 @@ public class SudokuApp {
 	/* Globals */
 	private static CellField[][] cells;
 	private static JFrame mainFrame;
+	private static JCheckBoxMenuItem beginnerGame;
+	private static JCheckBoxMenuItem intermediateGame;
+	private static JCheckBoxMenuItem expertGame;
+	private static JCheckBoxMenuItem blankGame;
 	
 	//Holds color and editable status for cells
 	private static final CellStyle normalCellStyle = new CellStyle("normalCellStyle", new Color(240, 240, 240), new Color(10, 10, 10));
@@ -86,12 +90,12 @@ public class SudokuApp {
 		JMenu gameMenu = new JMenu("Game");
 		JMenu optionsMenu = new JMenu("Options");
 		//Game menu items.
-		JMenu newGame = new JMenu("New Game");
-		JMenuItem uniqueGame = new JCheckBoxMenuItem("Unique");
-		JMenuItem beginnerGame = new JMenuItem("Beginner Game");
-		JMenuItem intermediateGame = new JMenuItem("Intermediate Game");
-		JMenuItem expertGame = new JMenuItem("Expert Game");
-		JMenuItem blankGame = new JMenuItem("Blank Game");
+		JCheckBoxMenuItem uniqueGame = new JCheckBoxMenuItem("Unique");
+		JMenuItem newGame = new JMenuItem("New Game");
+		beginnerGame = new JCheckBoxMenuItem("Beginner Game");
+		intermediateGame = new JCheckBoxMenuItem("Intermediate Game");
+		expertGame = new JCheckBoxMenuItem("Expert Game");
+		blankGame = new JCheckBoxMenuItem("Blank Game");
 		JPopupMenu settings = new JPopupMenu("Settings");
 		//Options menu items.
 		JCheckBoxMenuItem markDuplicates = new JCheckBoxMenuItem("Mark Duplicates");
@@ -112,35 +116,48 @@ public class SudokuApp {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				sudokuSettings.updateUnique();
+//				gameMenu.setPopupMenuVisible(true);
+				
+			}
+		});
+		newGame.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				newBoard();
 			}
 		});
 		beginnerGame.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				newBoard("beginner");
+				updateDifficulty("beginner");
+				beginnerGame.setSelected(true);
+				newBoard();
 			}
-			
 		});
+		beginnerGame.setSelected(true);
 		intermediateGame.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				newBoard("intermediate");
+				updateDifficulty("intermediate");
+				intermediateGame.setSelected(true);
+				newBoard();
 			}
-			
 		});
 		expertGame.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				newBoard("expert");
+				updateDifficulty("expert");
+				expertGame.setSelected(true);
+				newBoard();
 			}
-			
 		});
 		blankGame.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				newBoard("blank");
+				updateDifficulty("blank");
+				blankGame.setSelected(true);
+				newBoard();
 			}
-			
 		});
 		//Options menu.
 		markDuplicates.setSelected(true);
@@ -150,7 +167,6 @@ public class SudokuApp {
 				sudokuSettings.updateMarkDuplicates();
 				updateCells();
 			}
-			
 		});
 		markEmpty.addActionListener(new ActionListener() {
 			@Override
@@ -158,18 +174,18 @@ public class SudokuApp {
 				sudokuSettings.updateMarkEmpty();
 				updateCells();
 			}
-			
 		});
 		
 		log.config("Listeners Added.");
 		
 		//Add items to menus.
-		newGame.add(uniqueGame);
-		newGame.add(beginnerGame);
-		newGame.add(intermediateGame);
-		newGame.add(expertGame);
-		newGame.add(blankGame);
+		gameMenu.add(uniqueGame);
 		gameMenu.add(newGame);
+		gameMenu.addSeparator();
+		gameMenu.add(beginnerGame);
+		gameMenu.add(intermediateGame);
+		gameMenu.add(expertGame);
+		gameMenu.add(blankGame);
 		gameMenu.add(settings);
 		optionsMenu.add(markDuplicates);
 		optionsMenu.add(markEmpty);
@@ -228,7 +244,6 @@ public class SudokuApp {
 		log.config("Board ready!\n\n");
 		
 	}
-	
 
 	/**
 	 * Adds a listener object to provided cell field.
@@ -402,137 +417,132 @@ public class SudokuApp {
 	 * 
 	 * @param difficulty the type of new board to create.
 	 */
-	private static void newBoard(String difficulty) {
+	private static void newBoard() {
+		String difficulty = sudokuSettings.getActiveDifficulty();
 		log.info("Create new board");
 		mainFrame.setEnabled(false);
 		curBoard.reset();
-		//Reset board to try puzzle again.
-		if(difficulty.equals("reset")) {
-			//TODO store start board state.
-		} else {
-			//Clear board
-			log.fine("Clear board");
-			for(int i = 0; i < 9; i++) {
-				for(int j = 0; j < 9; j++) {
-					cells[i][j].setText("");
-					if(sudokuSettings.getMarkEmpty()) {
-						setTempStyle(cells[i][j], emptyCellStyle);
-					} else {
-						setTempStyle(cells[i][j], normalCellStyle);
-					}
+		//Clear board
+		log.fine("Clear board");
+		for(int i = 0; i < 9; i++) {
+			for(int j = 0; j < 9; j++) {
+				cells[i][j].setText("");
+				if(sudokuSettings.getMarkEmpty()) {
+					setTempStyle(cells[i][j], emptyCellStyle);
+				} else {
+					setTempStyle(cells[i][j], normalCellStyle);
 				}
 			}
-			log.fine("Board cleared");
-			//Return for blank board.
-			if(difficulty.equals("blank")) {
-				log.info("Created new blank board");
-				mainFrame.setEnabled(true);
-				return;
-			}
-			//Initialize all variables outside loops.
-			HashSet<Integer> columnSet = new HashSet<Integer>();
-			HashSet<Integer> minCellSet = new HashSet<Integer>();
-			int minColumn;
-			int finalIndex = 0;
-			int curIndex = 0;
-			int newNum = 0;
-			Random rand = new Random();
-			//Fill cells from top to bottom.
-			for(int row = 0; row < 9; row++) {
-				log.fine("Solving row " + row);
-				columnSet.addAll(Arrays.asList(new Integer[] {0, 1, 2, 3, 4, 5, 6, 7, 8}));  //Reset to full on each row
-				for(int i = 0; i < 9; i++) {
-					log.fine("\tSolving " + i + "th column");
-					log.fine("\tColumn set currently: " + columnSet);
-					minColumn = -1;  //Reset minColumn.
-					//Loop through remaining columns for current row.
-					for(int curColumn:columnSet) {
-						//First time through.
-						if(minColumn == -1) {
+		}
+		log.fine("Board cleared");
+		//Return for blank board.
+		if(difficulty.equals("blank")) {
+			log.info("Created new blank board");
+			mainFrame.setEnabled(true);
+			return;
+		}
+		//Initialize all variables outside loops.
+		HashSet<Integer> columnSet = new HashSet<Integer>();
+		HashSet<Integer> minCellSet = new HashSet<Integer>();
+		int minColumn;
+		int finalIndex = 0;
+		int curIndex = 0;
+		int newNum = 0;
+		Random rand = new Random();
+		//Fill cells from top to bottom.
+		for(int row = 0; row < 9; row++) {
+			log.fine("Solving row " + row);
+			columnSet.addAll(Arrays.asList(new Integer[] {0, 1, 2, 3, 4, 5, 6, 7, 8}));  //Reset to full on each row
+			for(int i = 0; i < 9; i++) {
+				log.fine("\tSolving " + i + "th column");
+				log.fine("\tColumn set currently: " + columnSet);
+				minColumn = -1;  //Reset minColumn.
+				//Loop through remaining columns for current row.
+				for(int curColumn:columnSet) {
+					//First time through.
+					if(minColumn == -1) {
+						minColumn = curColumn;
+						minCellSet = curBoard.getCellSet(row, minColumn);
+						log.finer("\t\tFirst min column: " + curColumn);
+						log.finer("\t\tWith cell set: " + minCellSet);
+					} else {
+						if(minCellSet.size() > curBoard.getCellSet(row, curColumn).size()) {
 							minColumn = curColumn;
 							minCellSet = curBoard.getCellSet(row, minColumn);
-							log.finer("\t\tFirst min column: " + curColumn);
+							log.finer("\t\tNew min column: " + minColumn);
 							log.finer("\t\tWith cell set: " + minCellSet);
-						} else {
-							if(minCellSet.size() > curBoard.getCellSet(row, curColumn).size()) {
-								minColumn = curColumn;
-								minCellSet = curBoard.getCellSet(row, minColumn);
-								log.finer("\t\tNew min column: " + minColumn);
-								log.finer("\t\tWith cell set: " + minCellSet);
-							}
 						}
 					}
-					log.fine("\tCell to fill: " + row + "," + minColumn);
-					//Remove the chosen column from the column set.
-					columnSet.remove(minColumn);
-					
-					//If the board becomes unsolvable, give up and try again.
-					if(minCellSet.size() == 0) {
-						log.warning("\tCreated unsolvable board. Retrying.");
-						mainFrame.setEnabled(true);
-						newBoard(difficulty);
-						return;
+				}
+				log.fine("\tCell to fill: " + row + "," + minColumn);
+				//Remove the chosen column from the column set.
+				columnSet.remove(minColumn);
+				
+				//If the board becomes unsolvable, give up and try again.
+				if(minCellSet.size() == 0) {
+					log.warning("\tCreated unsolvable board. Retrying.");
+					mainFrame.setEnabled(true);
+					newBoard();
+					return;
+				}
+				
+				//Pick a random legal value.
+				finalIndex = rand.nextInt(minCellSet.size());
+				curIndex = 0;
+				for(int curNum:minCellSet) {
+					if(curIndex==finalIndex) {
+						newNum = curNum;
+						break;
 					}
-					
-					//Pick a random legal value.
-					finalIndex = rand.nextInt(minCellSet.size());
-					curIndex = 0;
-					for(int curNum:minCellSet) {
-						if(curIndex==finalIndex) {
-							newNum = curNum;
-							break;
-						}
-						curIndex++;
-					}
-					log.fine("\tFilling cell with random value: " + newNum);
-					
-					//populate cell and update board.
-					try {
-						curBoard.newNumberUpdate(row, minColumn, "" + newNum);
-						cells[row][minColumn].setText("" + newNum);
-						cells[row][minColumn].setPrevNumber("" + newNum);
-						setTempStyle(cells[row][minColumn], startCellStyle);
-						cells[row][minColumn].setEditable(false);
-						log.finer("\t\tCell " + row + "," + minColumn + " set to text:" + newNum);
-					} catch(Exception e) {
-						System.out.println("Update exception catching for newBoard");
-						System.out.println(e.getMessage());
-					}
+					curIndex++;
+				}
+				log.fine("\tFilling cell with random value: " + newNum);
+				
+				//populate cell and update board.
+				try {
+					curBoard.newNumberUpdate(row, minColumn, "" + newNum);
+					cells[row][minColumn].setText("" + newNum);
+					cells[row][minColumn].setPrevNumber("" + newNum);
+					setTempStyle(cells[row][minColumn], startCellStyle);
+					cells[row][minColumn].setEditable(false);
+					log.finer("\t\tCell " + row + "," + minColumn + " set to text:" + newNum);
+				} catch(Exception e) {
+					System.out.println("Update exception catching for newBoard");
+					System.out.println(e.getMessage());
 				}
 			}
-			//Determine difficulty.
-			int cellsToRemove = 0;
-			if(difficulty.equals("beginner")) cellsToRemove = 20;
-			if(difficulty.equals("intermediate")) cellsToRemove = 35;
-			if(difficulty.equals("expert")) cellsToRemove = 45;
-			log.finer("Removing " + cellsToRemove + " cells.");
-			
-			//Initialize variables
-			boolean unique = sudokuSettings.getUnique();
-			int row = rand.nextInt(9);
-			int column = rand.nextInt(9);
-			//Remove cells
-			for(int i = 0; i < cellsToRemove; i++) {
-				log.fine("\tcell #" + i);
-				if(!unique) {
-					while(cells[row][column].getText().equals("")) {
-						row = rand.nextInt(9);
-						column = rand.nextInt(9);
-					}
-					log.fine("\tRemoving value from cell " + row + "," + column);
-					cells[row][column].setEditable(true);
-					curBoard.removeUpdate(cells, row, column);
-					cells[row][column].setText("");
-					cells[row][column].setPrevNumber("");
-					if(sudokuSettings.getMarkEmpty()) {
-						setTempStyle(cells[row][column], emptyCellStyle);
-					} else {
-						setTempStyle(cells[row][column], normalCellStyle);
-					}
-					cells[row][column].setEditable(true);
+		}
+		//Determine difficulty.
+		int cellsToRemove = 0;
+		if(difficulty.equals("beginner")) cellsToRemove = 20;
+		if(difficulty.equals("intermediate")) cellsToRemove = 35;
+		if(difficulty.equals("expert")) cellsToRemove = 45;
+		log.finer("Removing " + cellsToRemove + " cells.");
+		
+		//Initialize variables
+		boolean unique = sudokuSettings.getUnique();
+		int row = rand.nextInt(9);
+		int column = rand.nextInt(9);
+		//Remove cells
+		for(int i = 0; i < cellsToRemove; i++) {
+			log.fine("\tcell #" + i);
+			if(!unique) {
+				while(cells[row][column].getText().equals("")) {
+					row = rand.nextInt(9);
+					column = rand.nextInt(9);
 				}
+				log.fine("\tRemoving value from cell " + row + "," + column);
+				cells[row][column].setEditable(true);
+				curBoard.removeUpdate(cells, row, column);
+				cells[row][column].setText("");
+				cells[row][column].setPrevNumber("");
+				if(sudokuSettings.getMarkEmpty()) {
+					setTempStyle(cells[row][column], emptyCellStyle);
+				} else {
+					setTempStyle(cells[row][column], normalCellStyle);
+				}
+				cells[row][column].setEditable(true);
 			}
-			
 		}
 		log.info("New board finished\n");
 		mainFrame.setEnabled(true);
@@ -773,6 +783,26 @@ public class SudokuApp {
 				}
 			}
 		}
+	}
+	
+	/**
+	 * Unmark the old difficulty and set the current difficulty as active in settings.
+	 * 
+	 * @param newDifficulty the difficult that was just set to active.
+	 */
+	protected static void updateDifficulty(String newDifficulty) {
+		String oldDifficulty = sudokuSettings.getActiveDifficulty();
+		switch(oldDifficulty) {
+		case "beginner":
+			beginnerGame.setSelected(false);
+		case "intermediate":
+			intermediateGame.setSelected(false);
+		case "expert":
+			expertGame.setSelected(false);
+		case "blank":
+			blankGame.setSelected(false);
+		}
+		sudokuSettings.setActiveDifficulty(newDifficulty);
 	}
 }
 
