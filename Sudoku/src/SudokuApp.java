@@ -419,7 +419,7 @@ public class SudokuApp {
 	 */
 	private static void newBoard() {
 		String difficulty = sudokuSettings.getActiveDifficulty();
-		log.info("Create new board");
+		log.info("Create new " + difficulty + " board");
 		mainFrame.setEnabled(false);
 		curBoard.reset();
 		//Clear board
@@ -512,6 +512,7 @@ public class SudokuApp {
 				}
 			}
 		}
+		log.info("Board solved.");
 		//Determine difficulty.
 		int cellsToRemove = 0;
 		if(difficulty.equals("beginner")) cellsToRemove = 20;
@@ -520,29 +521,54 @@ public class SudokuApp {
 		log.finer("Removing " + cellsToRemove + " cells.");
 		
 		//Initialize variables
+		String prevValue = "";  //The value of the cell to set to empty
+		HashSet<Integer> curCellSet;
+		int repeatCount = 0;
 		boolean unique = sudokuSettings.getUnique();
 		int row = rand.nextInt(9);
 		int column = rand.nextInt(9);
 		//Remove cells
 		for(int i = 0; i < cellsToRemove; i++) {
 			log.fine("\tcell #" + i);
-			if(!unique) {
-				while(cells[row][column].getText().equals("")) {
+			while(cells[row][column].getText().equals("")) {
+				row = rand.nextInt(9);
+				column = rand.nextInt(9);
+			}
+			log.fine("\tRemoving value from cell " + row + "," + column);
+			//Grab current value for unique comparison
+			if(unique) {
+				prevValue = cells[row][column].getText();
+			}
+			//update curBoard first, then check for unique to minimize work to undo action.
+			curBoard.removeUpdate(cells, row, column);  
+			if(unique) {
+				curCellSet = curBoard.getCellSet(row, column);
+				if(curCellSet.size() != 1) {
+					repeatCount++;
+					if(repeatCount == 10) {
+						log.warning("Repeated 10 times, try again on a new board.");
+						newBoard();
+						return;
+					}
+					log.info("\tUnique check failed. Repeat loop.");
+					i--; //Repeat this loop
+					curBoard.newNumberUpdate(row, column, prevValue);
+					//Update cell to prevent infinite loop
 					row = rand.nextInt(9);
 					column = rand.nextInt(9);
+					continue;
 				}
-				log.fine("\tRemoving value from cell " + row + "," + column);
-				cells[row][column].setEditable(true);
-				curBoard.removeUpdate(cells, row, column);
-				cells[row][column].setText("");
-				cells[row][column].setPrevNumber("");
-				if(sudokuSettings.getMarkEmpty()) {
-					setTempStyle(cells[row][column], emptyCellStyle);
-				} else {
-					setTempStyle(cells[row][column], normalCellStyle);
-				}
-				cells[row][column].setEditable(true);
 			}
+			cells[row][column].setEditable(true);
+			curBoard.removeUpdate(cells, row, column);
+			cells[row][column].setText("");
+			cells[row][column].setPrevNumber("");
+			if(sudokuSettings.getMarkEmpty()) {
+				setTempStyle(cells[row][column], emptyCellStyle);
+			} else {
+				setTempStyle(cells[row][column], normalCellStyle);
+			}
+			cells[row][column].setEditable(true);
 		}
 		log.info("New board finished\n");
 		mainFrame.setEnabled(true);
