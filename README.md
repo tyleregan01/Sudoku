@@ -10,9 +10,9 @@ Create a full sudoku application to keep coding knowledge fresh.
 6. Finished my first attempt at creating new boards. It was a massive failure. I believe it is impossible to know you have created a solveable sudoku board without first solving it, let alone creating a unique board (Only 1 way to finish the board).
 7. Successfully solved random boards and removed cells based on difficulty. Cells are removed at random and it is not garunteed to have only 1 win state.
 8. Redesigned game menu for selecting difficulties based on Minesweeper's menu.
+9. Unique feature now implemented.
 
 # TODO
-* Unique random boards - Create boards that have only 1 solution.
 * "Reset"/"Retry" - save board states so a player can retry the same board.
 * "Mark Correct Cells" - Add another option for showing when the correct value is placed in a cell. Will be exclusive for unique boards.
 * Clock timer - Add a timer to track how long it takes a player to finish.
@@ -25,3 +25,4 @@ Create a full sudoku application to keep coding knowledge fresh.
 
 # Known Bugs
 1. If cell x creates bad cells and a cell other than x is changed from bad to good, color update can be wrong (Caused by how the check is done).
+2. A unique expert board is likely to cause a stack overflow error. Not sure if it's possible based on current implementation.
