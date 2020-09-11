@@ -37,6 +37,7 @@ import javax.swing.event.DocumentListener;
 public class SudokuApp {
 	
 	/* Globals */
+	//Swing objects
 	private static CellField[][] cells;
 	private static JFrame mainFrame;
 	private static JCheckBoxMenuItem beginnerGame;
@@ -51,6 +52,7 @@ public class SudokuApp {
 	private static final CellStyle startCellStyle = new CellStyle("startCellStyle", new Color(200, 200, 200), new Color(10, 10, 10));
 	private static final CellStyle startBadCellStyle = new CellStyle("startBadCellStyle", new Color(255, 130, 130), new Color(10, 10, 10));
 	
+	//Other objects
 	private static BoardState curBoard;
 	private static Logger log;
 	private static Settings sudokuSettings;
@@ -63,7 +65,6 @@ public class SudokuApp {
 	public static void main(String[] args) {
 		
 		/* Initialize objects */
-		
 		try {
 			log = Logger.getLogger("SudokuApp.Log");
 			LogManager.getLogManager().reset();
@@ -73,12 +74,12 @@ public class SudokuApp {
 			fileHandler.setFormatter(format);
 			log.setLevel(Level.ALL);
 			log.addHandler(fileHandler);
-			
 			log.config("Log created");
-			
 		} catch (SecurityException | IOException e1) {
 			//Auto-generated catch block
 			e1.printStackTrace();
+			System.out.println("Log creation failed!");
+			System.exit(-1);
 		}
 		sudokuSettings = new Settings();
 		curBoard = new BoardState(log);
@@ -116,6 +117,7 @@ public class SudokuApp {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				sudokuSettings.updateUnique();
+				//TODO how to keep menu from minimizing.
 //				gameMenu.setPopupMenuVisible(true);
 				
 			}
@@ -195,10 +197,11 @@ public class SudokuApp {
 		
 		log.config("Menu items added.");
 		
-		
 		//Set up game window
 		gameWindow.setLayout(new GridLayout(3,3));
 		gameWindow.setBorder(BorderFactory.createLineBorder(Color.black));
+		
+		/* Create blank board */
 		
 		//Create and format boxes and cells and add to game window.
 		for(int row = 0; row < 9; row++) {
@@ -238,7 +241,6 @@ public class SudokuApp {
 		//Add components to frame
 		mainFrame.getContentPane().add(BorderLayout.NORTH, menu);
 		mainFrame.getContentPane().add(BorderLayout.CENTER, gameWindow);
-		
 		mainFrame.setVisible(true);
 		
 		log.config("Board ready!\n\n");
@@ -261,15 +263,17 @@ public class SudokuApp {
 			 */
 			@Override
 			public void insertUpdate(DocumentEvent documentEvent) {
+				
 				log.info("\tInsert update");
 				log.info("\t" + cell.getText() + " added to cell " + cell.getRow() + "," + cell.getColumn());
 				int length = cell.getText().length();
-				if (length == 1) {
-					if (!("123456789".contains(cell.getText()))) {
+				if (length == 1) {  //Length is good. Check if value is okay.
+					if (!("123456789".contains(cell.getText()))) { //Numbers only
 						log.fine("\tNot a number, remove text.");
 						removeText(cell, 0, 1);
 						return;
 					} else {
+						//TODO Save time/computation if new value is same as old.
 						if(sudokuSettings.getMarkDuplicates()) {
 							log.fine("\tCheck cells for duplicates.");
 							checkCells(cell.getBox(), cell.getColumn(), cell.getRow());
@@ -284,7 +288,7 @@ public class SudokuApp {
 					removeText(cell, 1, cell.getText().length());
 					return;
 				} else {
-					log.warning("\tWhat should be done in this situation?");
+					log.severe("\tlength < 1 after insert...what?");
 				}
 				log.fine("\tCell " + cell.getRow() + "," + cell.getColumn() + " previous number set to: " + cell.getText());
 				cell.setPrevNumber(cell.getText());
@@ -303,10 +307,10 @@ public class SudokuApp {
 					int column = cell.getColumn();
 					int row = cell.getRow();
 					int box = cell.getBox();
-					//Check for duplicates
+					//Check for duplicates (Method requires ArrayList due to uses elsewhere).
 					runDuplicates(duplicateRows, duplicateColumns, box, column, row, true);
 				}
-				if(cell.getText().length() == 0) {
+				if(cell.getText().length() == 0) { //Empty cell
 					if(sudokuSettings.getMarkEmpty()) {
 						log.fine("\t\tMark empties");
 						setTempStyle(cell, emptyCellStyle);
@@ -329,8 +333,7 @@ public class SudokuApp {
 			}
 			
 			/**
-			 * Removes text to force the cell to stay with 1 number and no other text.
-			 * Also updates cell style.
+			 * Remove text based on input. If size is 1, set to empty string.
 			 * 
 			 * @param cell The cell to remove text from.
 			 * @param start The first character to keep.
@@ -338,7 +341,7 @@ public class SudokuApp {
 			 */
 			private void removeText(CellField cell, int start, int end) {
 				log.info("\t\tRemoveText()");
-				//If there is only 1 value, set to empty string and empty style.
+				//If there is only 1 value, set to empty string.
 				if(cell.getText().length() == 1) {
 					log.fine("\t\tLength is 1");
 					setCellNumber(cell.getRow(), cell.getColumn(), "");
@@ -348,8 +351,8 @@ public class SudokuApp {
 					String newText = cell.getText().substring(start, end);
 					setCellNumber(cell.getRow(), cell.getColumn(), newText);
 				}
-				
 				log.fine("\tCell " + cell.getRow() + "," + cell.getColumn() + " previous number set to: " + cell.getText());
+				//Do not modify style. Changing the text will call an Update method and that will update style.
 			}
 		});
 	}
@@ -366,13 +369,14 @@ public class SudokuApp {
 		//Initialize variables.
 		log.info("\t\tCheckCells Method");
 		log.info("\t\tRow: " + row + "\n\t\tColumn: " + column + "\n\t\tNumber: " + cells[row][column].getText());
-		String curStyle = cells[row][column].getStyle();
+		String curStyle = cells[row][column].getStyle(); //The style of the main cell to check.
 		ArrayList<Integer> duplicateRows = new ArrayList<Integer>();
 		ArrayList<Integer> duplicateColumns = new ArrayList<Integer>();
 		
 		//Run first check
 		runDuplicates(duplicateRows, duplicateColumns, box, column, row, false);
 
+		//TODO Bug #1, bad cells can update incorrectly.
 		//What update is needed?
 		if(duplicateRows.size() == 0) {
 			log.fine("\t\tNo duplicates found");
@@ -389,11 +393,13 @@ public class SudokuApp {
 				}
 				return;
 			}
-		} else {
+		} else { //Duplicate cells found
 			if(curStyle.equals("badCellStyle")) {
+				//Update all duplicates to bad.
 				for(int index = 0; index < duplicateRows.size(); index++) {
 					setTempStyle(cells[duplicateRows.get(index)][duplicateColumns.get(index)], badCellStyle);
 				}
+				//Check for duplicates from previous value.
 				runDuplicates(duplicateRows, duplicateColumns, box, column, row, true);
 				log.fine("\t\tBad cell still bad.");
 				return;
@@ -453,6 +459,7 @@ public class SudokuApp {
 		for(int row = 0; row < 9; row++) {
 			log.fine("Solving row " + row);
 			columnSet.addAll(Arrays.asList(new Integer[] {0, 1, 2, 3, 4, 5, 6, 7, 8}));  //Reset to full on each row
+			//Find the most important column 9 times.
 			for(int i = 0; i < 9; i++) {
 				log.fine("\tSolving " + i + "th column");
 				log.fine("\tColumn set currently: " + columnSet);
@@ -479,6 +486,7 @@ public class SudokuApp {
 				columnSet.remove(minColumn);
 				
 				//If the board becomes unsolvable, give up and try again.
+				//TODO Improve board solving so retries don't happen.
 				if(minCellSet.size() == 0) {
 					log.warning("\tCreated unsolvable board. Retrying.");
 					mainFrame.setEnabled(true);
@@ -528,8 +536,12 @@ public class SudokuApp {
 		int row = rand.nextInt(9);
 		int column = rand.nextInt(9);
 		//Remove cells
+		//TODO Bug fix: cannot make unique expert boards
+		//TODO Improvement: More advanced tracking of what a unique board is.
 		for(int i = 0; i < cellsToRemove; i++) {
 			log.fine("\tcell #" + i);
+			//Find non-empty cell
+			//TODO What if row is cycled through?
 			while(cells[row][column].getText().equals("")) {
 				row = rand.nextInt(9);
 				column = rand.nextInt(9);
@@ -553,14 +565,14 @@ public class SudokuApp {
 					log.info("\tUnique check failed. Repeat loop.");
 					i--; //Repeat this loop
 					curBoard.newNumberUpdate(row, column, prevValue);
-					//Update cell to prevent infinite loop
+					//Update cell to try again
 					row = rand.nextInt(9);
 					column = rand.nextInt(9);
 					continue;
 				}
 			}
+			//Update cell to empty and editable
 			cells[row][column].setEditable(true);
-			curBoard.removeUpdate(cells, row, column);
 			cells[row][column].setText("");
 			cells[row][column].setPrevNumber("");
 			if(sudokuSettings.getMarkEmpty()) {
@@ -568,7 +580,6 @@ public class SudokuApp {
 			} else {
 				setTempStyle(cells[row][column], normalCellStyle);
 			}
-			cells[row][column].setEditable(true);
 		}
 		log.info("New board finished\n");
 		mainFrame.setEnabled(true);
@@ -585,7 +596,7 @@ public class SudokuApp {
 	 * @return False if the numbers are different or the row and column sets are the same. True otherwise.
 	 */
 	private static boolean numbersSame(int rowOrig, int columnOrig, int rowNew, int columnNew) {
-		log.fine("\t\t\tNumbersSame()");
+		//Compare cell contents
 		log.fine("\t\t\tCell 1: " +  rowOrig + "," + columnOrig + " Cell 2: " + rowNew + "," + columnNew);
 		String curNum = cells[rowOrig][columnOrig].getText();
 		if(cells[rowNew][columnNew].getText().contains(curNum)) {
@@ -593,7 +604,7 @@ public class SudokuApp {
 				log.warning("\t\t\tSame cell checked");
 				return false; //Checking the same cell
 			} else {
-				log.fine("\t\t\t\tDuplicate found!");
+				log.fine("\t\t\tDuplicate found!");
 				return true;
 			}
 		}
@@ -611,7 +622,7 @@ public class SudokuApp {
 	 * @return False if the numbers are different, true if they are the same.
 	 */
 	private static boolean numbersSame(String prevNum, int rowNew, int columnNew) {
-		log.fine("\t\t\tNumbersSame()");
+		//Compare cell contents
 		log.fine("\t\t\tNumber: " +  prevNum + " Cell: " + rowNew + "," + columnNew);
 		if(cells[rowNew][columnNew].getText().contains(prevNum)) {
 			return true;
@@ -651,7 +662,7 @@ public class SudokuApp {
 				}
 			}
 		}
-		//Update to normal
+		//If 1 cell is found on prevNum, there is no longer a duplicate.
 		if(usePrevNumber) {
 			if(duplicateRows.size() == 1) {
 				log.fine("\t\t\tOnly 1 duplicate found from old number. Set to normal");
@@ -679,6 +690,7 @@ public class SudokuApp {
 			}
 		}
 		
+		//If 1 cell is found on prevNum, there is no longer a duplicate.
 		if(usePrevNumber) {
 			if(duplicateRows.size() == 1) {
 				log.fine("\t\t\tOnly 1 duplicate found from old number. Set to normal");
@@ -710,6 +722,8 @@ public class SudokuApp {
 			}
 		}
 		
+		//If 1 cell is found on prevNum, there is no longer a duplicate.
+		//This may be used 3 times, but it's small enough and requires enough variables, I think not factoring it out is better.
 		if(usePrevNumber) {
 			if(duplicateRows.size() == 1) {
 				log.fine("\t\t\tOnly 1 duplicate found from old number. Set to normal");
@@ -723,25 +737,28 @@ public class SudokuApp {
 	}
 	
 	/**
-	 * Sets an editable cell to a new number.
+	 * Sets a cell to a new number without interrupting the application's user.
 	 * 
 	 * @param row The row of the cell.
 	 * @param column The column of the cell.
 	 * @param newText The number to put in the cell.
 	 */
+	//TODO what if I set editable to false instead of using a runnable?
 	private static void setCellNumber(int row, int column, String newText) {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					if(!newText.equals("")) {
-						curBoard.newNumberUpdate(row, column, newText);
-					} else {
+					if(newText.equals("")) {
 						curBoard.removeUpdate(cells, row, column);
+					} else {
+						curBoard.newNumberUpdate(row, column, newText);
 					}
 					cells[row][column].setText(newText);
 					log.fine("\t\tCell " + row + "," + column + " set to text:" + newText);
 				} catch (StringIndexOutOfBoundsException e) {
-					//Do nothing. It's fine.
+					/* This only happens some of the time that a user spams input into the same cell.
+					 * The chance of a user's last input causing this is close to 0. Just do nothing.
+					 */
 				}
 			}
 		});
@@ -776,12 +793,14 @@ public class SudokuApp {
 		//Start cells are not editable and require difference colors.
 		} else {
 			if(styles.name.equals(badCellStyle.name)) {
+				//Update to bad cell style for start cells.
 				log.finer("\t\t\tCell " + cell.getRow() + "," + cell.getColumn());
 				log.finer("\t\t\tSet to style " + startBadCellStyle.name);
 		        cell.setBackground(startBadCellStyle.bgColor);
 		        cell.setForeground(startBadCellStyle.fgColor);
 		        cell.setStyle(startBadCellStyle.name);
 			} else {
+				//Update to normal cell style for start cells.
 				log.finer("\t\t\tCell " + cell.getRow() + "," + cell.getColumn());
 				log.finer("\t\t\tSet to style " + startCellStyle.name);
 		        cell.setBackground(startCellStyle.bgColor);
@@ -793,9 +812,10 @@ public class SudokuApp {
 	}
 	
 	/**
-	 * Update the styles of all cells based on settings.
+	 * Update the styles of all cells based on a settings update.
 	 */
 	private static void updateCells() {
+		//TODO Add duplicate checking.
 		String curText;
 		for(int i = 0; i < 9; i++) {
 			for (int j = 0; j < 9; j++) {
