@@ -536,7 +536,7 @@ public class SudokuApp {
 		int row = rand.nextInt(9);
 		int column = rand.nextInt(9);
 		//Remove cells
-		//TODO Bug fix: cannot make unique expert boards
+		//TODO Bug #2: cannot make unique expert boards
 		//TODO Improvement: More advanced tracking of what a unique board is.
 		for(int i = 0; i < cellsToRemove; i++) {
 			log.fine("\tcell #" + i);
