@@ -25,6 +25,7 @@ public class BoardState {
 		rowSet = new ArrayList<HashSet<Integer>>();
 		fullSet.addAll(Arrays.asList(new Integer[] {1, 2, 3, 4, 5, 6, 7, 8, 9}));
 		
+		//Set every HashSet to a new fullSet
 		for(int i = 0; i < 9; i++) {
 			boxSet.add(i, new HashSet<Integer>(fullSet));
 			columnSet.add(i, new HashSet<Integer>(fullSet));
@@ -47,13 +48,11 @@ public class BoardState {
 		log.finer("\t\t\tboxSet: " + boxSet.get(((row/3)*3)+(column/3)));
 		log.finer("\t\t\tcolumnSet: " + columnSet.get(column));
 		log.finer("\t\t\trowSet: " + rowSet.get(row));
-		cellSet.retainAll(boxSet.get(((row/3)*3)+(column/3)));
+		cellSet.retainAll(boxSet.get(((row/3)*3)+(column/3))); //integer division yeilds the current result.
 		cellSet.retainAll(columnSet.get(column));
 		cellSet.retainAll(rowSet.get(row));
 		return cellSet;
 	}
-
-
 
 	/**
 	 * Adds the provided number to the board.
@@ -64,6 +63,7 @@ public class BoardState {
 	 */
 	public void newNumberUpdate(int row, int column, String newText) {
 		try {
+			//Remove the newText from all related HashSets
 			int newNum = Integer.parseInt(newText);
 			log.fine("\t\t\tRemove number " + newNum);
 			rowSet.get(row).remove(newNum);
@@ -78,8 +78,6 @@ public class BoardState {
 		}
 	}
 
-
-
 	/**
 	 * Clears the value of the provided cell from the board.
 	 * 
@@ -88,10 +86,15 @@ public class BoardState {
 	 * @param column The column of the cell that was updated.
 	 */
 	public void removeUpdate(CellField[][] cells, int row, int column) {
+		/*Only update if that cell's value is not in any related cell (row, column, box separately)*/
+		
 		//Initialize variables.
 		String removedNum = cells[row][column].getPrevNumber();
 		boolean rowFound = false;
 		boolean columnFound = false;
+		boolean boxFound = false;
+		int rowStart = (row/3)*3;
+		int columnStart = (column/3)*3;
 		//Search row and column
 		for(int i = 0; i < 9; i++) {
 			if(cells[i][column].getText().equals(removedNum) & (i != row)){
@@ -102,9 +105,6 @@ public class BoardState {
 			}
 		}
 		//Run box checks
-		boolean boxFound = false;
-		int rowStart = (row/3)*3;
-		int columnStart = (column/3)*3;
 		for(int curRow = rowStart; curRow < rowStart+3; curRow++) {
 			for(int curColumn = columnStart; curColumn < columnStart+3; curColumn++) {
 				if(cells[curRow][curColumn].getText().equals(removedNum) & (curRow != row) & (curColumn != column)){
