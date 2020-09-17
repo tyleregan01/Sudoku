@@ -12,6 +12,8 @@ Create a full sudoku application to keep coding knowledge fresh.
 8. Redesigned game menu for selecting difficulties based on Minesweeper's menu.
 9. Unique feature now implemented.
 10. Refactor: comments, TODOs, and documentation.
+11. Fixed bug 3: letters and 0 could sometimes be added. Attempted Things to try #1: Don't use runnables - Resulted in errors. May research more later.
+Attempted minor performance improvement: don't perform comparisons when not needed - the setText() operation triggers both the removeUpdate and insertUpdate listeners. As such, there is currently no way to distinguish between a user's remove and a program's remove. Update info in TODO.
 
 
 # TODO
@@ -25,7 +27,7 @@ Create a full sudoku application to keep coding knowledge fresh.
 * "Help" Menu - Menu with options for explaining how sudoku works and what each option in the game does.
 * Refactor - Refactor code every few steps to ensure well organized code.
 * Menu minimization fix - Prevent the menu from minimizing after any click.
-* Minor performance improvement: Don't perform comparisons when the new value is the same as the old value.
+* Minor performance improvement: Don't perform comparisons when not needed (Flag for user vs program removeUpdates)
 * Major performance improvement: Change how boards are unsolved to ensure retries are not attempted.
 * Bug #2/Major experience improvement: Add new techniques for unsolving a board. This will make unique expert boards possible and truly expert boards.
 * Duplicate checking: Update cell styles when duplicate checking setting is changed.
@@ -36,4 +38,3 @@ Create a full sudoku application to keep coding knowledge fresh.
 # Known Bugs
 1. If cell x creates bad cells and a cell other than x is changed from bad to good, color update can be wrong (Caused by how the check is done).
 2. A unique expert board is likely to cause a stack overflow error. Not sure if successful creation is possible based on current implementation.
-3. If a non-number or 0 is added to a cell, an error message will be displayed to console.
