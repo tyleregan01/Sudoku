@@ -37,6 +37,4 @@ Attempted minor performance improvement: don't perform comparisons when not need
 
 
 # Known Bugs
-1. ~~If cell x creates bad cells and a cell other than x is changed from bad to good, color update can be wrong (Caused by how the check is done).~~
-2. A unique expert board is likely to cause a stack overflow error. Not sure if successful creation is possible based on current implementation.
-3. ~~If a non-number or 0 is added to a cell, an error message will be displayed to console.~~
+Now tracked in issues.
