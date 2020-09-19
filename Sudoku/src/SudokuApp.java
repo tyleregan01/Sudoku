@@ -302,21 +302,14 @@ public class SudokuApp {
 			 */
 			@Override
 			public void removeUpdate(DocumentEvent documentEvent) {
-				//TODO Create a flag for program initiated removes to minimize computations.
+				//TODO Create a flag for program initiated removals to minimize computations.
 				log.finest("\tremoveUpdate() started");
 				if(cell.getText().equals(cell.getPrevNumber())) {
 					log.info("\tSkip insert, value did not change.");
 					return;
 				}
 				if(cell.getStyle().equals("badCellStyle")) {
-					//Set variables
-					ArrayList<Integer> duplicateRows = new ArrayList<Integer>();
-					ArrayList<Integer> duplicateColumns = new ArrayList<Integer>();
-					int column = cell.getColumn();
-					int row = cell.getRow();
-					int box = cell.getBox();
-					//Check for duplicates (Method requires ArrayList due to uses elsewhere).
-					runDuplicates(duplicateRows, duplicateColumns, box, column, row, true);
+					checkCells(cell.getBox(), cell.getColumn(), cell.getRow());
 				}
 				if(cell.getText().length() == 0) { //Empty cell
 					if(sudokuSettings.getMarkEmpty()) {
@@ -379,51 +372,62 @@ public class SudokuApp {
 	 * @param row The row of the cell to check.
 	 */
 	private static void checkCells(int box, int column, int row) {
-
-		//Initialize variables.
+		
 		log.finest("\t\tcheckCells() started");
-		log.info("\t\tRow: " + row + "\n\t\tColumn: " + column + "\n\t\tNumber: " + cells[row][column].getText());
-		String curStyle = cells[row][column].getStyle(); //The style of the main cell to check.
+		//Initialize variables.
 		ArrayList<Integer> duplicateRows = new ArrayList<Integer>();
 		ArrayList<Integer> duplicateColumns = new ArrayList<Integer>();
+//		CellField curCell = cells[row][column];
+		String curStyle = cells[row][column].getStyle(); //The style of the main cell to check.
+		String oldNum = cells[row][column].getPrevNumber();
+		String newNum = cells[row][column].getText();
+		log.finest("\t\tCell " + row + "," + column + " - " + oldNum + "," + newNum);
 		
-		//Run first check
-		runDuplicates(duplicateRows, duplicateColumns, box, column, row, false);
-
-		//TODO Bug #1, bad cells can update incorrectly.
-		//What update is needed?
-		if(duplicateRows.size() == 0) {
-			log.fine("\t\tNo duplicates found");
-			if(curStyle.equals("badCellStyle")) {
-				//Update bad styles to good styles.
+		//Step 1: If the style was bad, update old duplicates.
+		if(curStyle.equals("badCellStyle")) {
+			log.finer("\t\tStep 1: Update old duplicates");
+			findDuplicates(duplicateRows, duplicateColumns, row, column, oldNum);
+			log.finer("\t\tStyle was bad. Checking old duplicates.");
+			ArrayList<Integer> tempRows = new ArrayList<Integer>();
+			ArrayList<Integer> tempColumns = new ArrayList<Integer>();
+			//For each old duplicate, check if it should be updated.
+			for(int index = 0; index < duplicateRows.size(); index++) {
+				findDuplicates(tempRows, tempColumns, duplicateRows.get(index), duplicateColumns.get(index), oldNum);
+				//If no duplicates remain, update to normal
+				if(tempRows.size() == 0) {
+					setTempStyle(cells[duplicateRows.get(index)][duplicateColumns.get(index)], normalCellStyle);
+					log.info("\t\tCell " + duplicateRows.get(index) + "," + duplicateColumns.get(index) + " updated to normal style.");
+				}
+				tempRows.clear();
+				tempColumns.clear();
+			}
+			log.finer("\t\tStep 1 complete.");
+		}
+		
+		//Step 2: Check for duplicates on current value.
+		log.finer("\t\tStep 2: Check current value");
+		if(newNum.equals("")) {
+			//The update was a removal and there is no number. Do not check for bad cells.
+			if(sudokuSettings.getMarkEmpty()) {
+				setTempStyle(cells[row][column], emptyCellStyle);
+			} else {
 				setTempStyle(cells[row][column], normalCellStyle);
-				log.fine("\t\tBad cell updated to good cell.");
-				runDuplicates(duplicateRows, duplicateColumns, box, column, row, true);
-			} else {
-				log.fine("\t\tNo duplicates found and not bad. Return.");
-				if(curStyle.equals("emptyCellStyle")){
-					setTempStyle(cells[row][column], normalCellStyle);
-				}
 			}
-		} else { //Duplicate cells found
-			if(curStyle.equals("badCellStyle")) {
-				//Update all duplicates to bad.
-				for(int index = 0; index < duplicateRows.size(); index++) {
-					setTempStyle(cells[duplicateRows.get(index)][duplicateColumns.get(index)], badCellStyle);
-				}
-				//Check for duplicates from previous value.
-				runDuplicates(duplicateRows, duplicateColumns, box, column, row, true);
-				log.fine("\t\tBad cell still bad.");
-			} else {
-				log.fine("\t\tGood cell needs updated to bad.");
-				setTempStyle(cells[row][column], badCellStyle);
-				log.fine("\t\tMain cell: " + row + "," + column);
-				for(int index = 0; index < duplicateRows.size(); index++) {
-					log.fine("\t\tCell " + duplicateRows.get(index) + ',' + duplicateColumns.get(index) + " updated to bad cell.");
-					setTempStyle(cells[duplicateRows.get(index)][duplicateColumns.get(index)], badCellStyle);
-				}
-				log.fine("\t\tCells updated to bad.");
+			log.finest("\t\tcheckCells() finished");
+			return;
+		}
+		duplicateRows.clear();
+		duplicateColumns.clear();
+		findDuplicates(duplicateRows, duplicateColumns, row, column, newNum);
+		//For each duplicate, update to bad style
+		if(duplicateRows.size() > 0) {
+			setTempStyle(cells[row][column], badCellStyle);
+			for(int index = 0; index < duplicateRows.size(); index++) {
+				setTempStyle(cells[duplicateRows.get(index)][duplicateColumns.get(index)], badCellStyle);
 			}
+		} else {
+			//No duplicates, update to normal style
+			setTempStyle(cells[row][column], normalCellStyle);
 		}
 		log.finest("\t\tcheckCells() finished");
 	}
@@ -595,37 +599,37 @@ public class SudokuApp {
 		mainFrame.setEnabled(true);
 	}
 	
-	/**
-	 * Checks if the number in the first row and column set given is the same
-	 * as the number given in the second row and column set.
-	 * 
-	 * @param rowOrig The row for the first cell.
-	 * @param columnOrig The column for the first cell.
-	 * @param rowNew The row for the second cell.
-	 * @param columnNew The column for the second cell.
-	 * @return False if the numbers are different or the row and column sets are the same. True otherwise.
-	 */
-	private static boolean numbersSame(int rowOrig, int columnOrig, int rowNew, int columnNew) {
-		
-		log.finest("\t\t\t\tnumbersSame() Started");
-		//Compare cell contents
-		log.fine("\t\t\tCell 1: " +  rowOrig + "," + columnOrig + " Cell 2: " + rowNew + "," + columnNew);
-		String curNum = cells[rowOrig][columnOrig].getText();
-		if(cells[rowNew][columnNew].getText().contains(curNum)) {
-			if(rowOrig == rowNew & columnOrig == columnNew) {
-				log.fine("\t\t\tSame cell checked");
-				log.finest("\t\t\t\tnumbersSame() finished");
-				return false; //Checking the same cell
-			} else {
-				log.fine("\t\t\tDuplicate found!");
-				log.finest("\t\t\t\tnumbersSame() finished");
-				return true;
-			}
-		}
-		log.fine("\t\t\tNo duplicate found");
-		log.finest("\t\t\t\tnumbersSame() finished");
-		return false;
-	}
+//	/**
+//	 * Checks if the number in the first row and column set given is the same
+//	 * as the number given in the second row and column set.
+//	 * 
+//	 * @param rowOrig The row for the first cell.
+//	 * @param columnOrig The column for the first cell.
+//	 * @param rowNew The row for the second cell.
+//	 * @param columnNew The column for the second cell.
+//	 * @return False if the numbers are different or the row and column sets are the same. True otherwise.
+//	 */
+//	private static boolean numbersSame(int rowOrig, int columnOrig, int rowNew, int columnNew) {
+//		
+//		log.finest("\t\t\t\tnumbersSame() Started");
+//		//Compare cell contents
+//		log.fine("\t\t\tCell 1: " +  rowOrig + "," + columnOrig + " Cell 2: " + rowNew + "," + columnNew);
+//		String curNum = cells[rowOrig][columnOrig].getText();
+//		if(cells[rowNew][columnNew].getText().contains(curNum)) {
+//			if(rowOrig == rowNew & columnOrig == columnNew) {
+//				log.fine("\t\t\tSame cell checked");
+//				log.finest("\t\t\t\tnumbersSame() finished");
+//				return false; //Checking the same cell
+//			} else {
+//				log.fine("\t\t\tDuplicate found!");
+//				log.finest("\t\t\t\tnumbersSame() finished");
+//				return true;
+//			}
+//		}
+//		log.fine("\t\t\tNo duplicate found");
+//		log.finest("\t\t\t\tnumbersSame() finished");
+//		return false;
+//	}
 	
 	/**
 	 * Checks if the previous number of a cell is the same
@@ -641,7 +645,7 @@ public class SudokuApp {
 		//Compare cell contents
 		log.finest("\t\t\t\tnumbersSame() started");
 		log.fine("\t\t\t\tNumber: " +  prevNum + " Cell: " + rowNew + "," + columnNew);
-		if(cells[rowNew][columnNew].getText().contains(prevNum)) {
+		if(cells[rowNew][columnNew].getText().equals(prevNum)) {
 			log.finest("\t\t\t\tnumbersSame() finished.");
 			return true;
 		}
@@ -660,65 +664,28 @@ public class SudokuApp {
 	 * @param row the row of the cell to check.
 	 * @param usePrevNumber whether to use the previous number of the cell or not.
 	 */
-	private static void runDuplicates(ArrayList<Integer> duplicateRows, ArrayList<Integer> duplicateColumns, int box,
-			int column, int row, boolean usePrevNumber) {
+	private static void findDuplicates(ArrayList<Integer> duplicateRows, ArrayList<Integer> duplicateColumns,
+			int row, int column, String mainNumber) {
 		
 		log.finest("\t\t\trunDuplicates() Started");
-		//Set prevNum
-		String prevNum = cells[row][column].getPrevNumber();
 		//Run row checks
 		for(int i = 0; i < 9; i++) {
-			if(usePrevNumber) {
-				if(numbersSame(prevNum, i, column)) {
-					duplicateRows.add(i);
-					duplicateColumns.add(column);
-					log.fine("\t\t\tDuplicate cell added: " + i + "," + column);
-				}
-			} else {
-				if(numbersSame(row, column, i, column)) {
-					duplicateRows.add(i);
-					duplicateColumns.add(column);
-					log.fine("\t\t\tDuplicate cell added: " + i + "," + column);
-				}
+			if(i == row) continue;
+			if(numbersSame(mainNumber, i, column)) {
+				duplicateRows.add(i);
+				duplicateColumns.add(column);
+				log.fine("\t\t\tDuplicate cell added: " + i + "," + column);
 			}
-		}
-		//If 1 cell is found on prevNum, there is no longer a duplicate.
-		if(usePrevNumber) {
-			if(duplicateRows.size() == 1) {
-				log.fine("\t\t\tOnly 1 duplicate found from old number. Set to normal");
-				setTempStyle(cells[duplicateRows.get(0)][duplicateColumns.get(0)], normalCellStyle);
-			}
-			//Reset duplicate tracker.
-			duplicateRows.clear();
-			duplicateColumns.clear();
 		}
 		
 		//Run column checks
 		for(int i = 0; i < 9; i++) {
-			if(usePrevNumber) {
-				if(numbersSame(prevNum, row, i)) {
-					duplicateRows.add(row);
-					duplicateColumns.add(i);
-					log.fine("\t\t\tDuplicate cell added: " + row + "," + i);
-				}
-			} else {
-				if(numbersSame(row, column, row, i)) {
-					duplicateRows.add(row);
-					duplicateColumns.add(i);
-					log.fine("\t\t\tDuplicate cell added: " + row + "," + i);
-				}
+			if(i == column) continue;
+			if(numbersSame(mainNumber, row, i)) {
+				duplicateRows.add(row);
+				duplicateColumns.add(i);
+				log.fine("\t\t\tDuplicate cell added: " + row + "," + i);
 			}
-		}
-		
-		//If 1 cell is found on prevNum, there is no longer a duplicate.
-		if(usePrevNumber) {
-			if(duplicateRows.size() == 1) {
-				log.fine("\t\t\tOnly 1 duplicate found from old number. Set to normal");
-				setTempStyle(cells[duplicateRows.get(0)][duplicateColumns.get(0)], normalCellStyle);
-			}
-			//Reset duplicate tracker.
-			duplicateRows.clear();
-			duplicateColumns.clear();
 		}
 		
 		//Run box checks
@@ -726,35 +693,15 @@ public class SudokuApp {
 		int columnStart = (column/3)*3;
 		for(int curRow = rowStart; curRow < rowStart+3; curRow++) {
 			for(int curColumn = columnStart; curColumn < columnStart+3; curColumn++) {
-				if(usePrevNumber) {
-					if(numbersSame(prevNum, curRow, curColumn)) {
-						duplicateRows.add(curRow);
-						duplicateColumns.add(curColumn);
-						log.fine("\t\t\tDuplicate cell added: " + curRow + "," + curColumn);
-					}
-				} else {
-					if(numbersSame(row, column, curRow, curColumn)) {
-						duplicateRows.add(curRow);
-						duplicateColumns.add(curColumn);
-						log.fine("\t\t\tDuplicate cell added: " + curRow + "," + curColumn);
-					}
+				if(curRow == row & curColumn == column) continue;
+				if(numbersSame(mainNumber, curRow, curColumn)) {
+					duplicateRows.add(curRow);
+					duplicateColumns.add(curColumn);
+					log.fine("\t\t\tDuplicate cell added: " + curRow + "," + curColumn);
 				}
 			}
 		}
-		
-		//If 1 cell is found on prevNum, there is no longer a duplicate.
-		//This may be used 3 times, but it's small enough and requires enough variables, I think not factoring it out is better.
-		if(usePrevNumber) {
-			if(duplicateRows.size() == 1) {
-				log.fine("\t\t\tOnly 1 duplicate found from old number. Set to normal");
-				setTempStyle(cells[duplicateRows.get(0)][duplicateColumns.get(0)], normalCellStyle);
-			}
-			//Reset duplicate tracker.
-			duplicateRows.clear();
-			duplicateColumns.clear();
-		}
 		log.finest("\t\t\trunDuplicates() Finished");
-		
 	}
 	
 	/**
