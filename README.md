@@ -12,8 +12,9 @@ Create a full sudoku application to keep coding knowledge fresh.
 8. Redesigned game menu for selecting difficulties based on Minesweeper's menu.
 9. Unique feature now implemented.
 10. Refactor: comments, TODOs, and documentation.
-11. Fixed bug 3: letters and 0 could sometimes be added. Attempted Things to try #1: Don't use runnables - Resulted in errors. May research more later.
+11. Fixed bug 3: Only 1-9 can be added now. Attempted Things to try #1: First attempt resulted in illegal state modication. May research more later.
 Attempted minor performance improvement: don't perform comparisons when not needed - the setText() operation triggers both the removeUpdate and insertUpdate listeners. As such, there is currently no way to distinguish between a user's remove and a program's remove. Update info in TODO.
+12: Fixed bug 1: Duplicate checking always updates correctly. Also simplified/reduced code considerably. Easier to read and removed a method.
 
 
 # TODO
@@ -36,5 +37,6 @@ Attempted minor performance improvement: don't perform comparisons when not need
 
 
 # Known Bugs
-1. If cell x creates bad cells and a cell other than x is changed from bad to good, color update can be wrong (Caused by how the check is done).
+1. ~~If cell x creates bad cells and a cell other than x is changed from bad to good, color update can be wrong (Caused by how the check is done).~~
 2. A unique expert board is likely to cause a stack overflow error. Not sure if successful creation is possible based on current implementation.
+3. ~~If a non-number or 0 is added to a cell, an error message will be displayed to console.~~
