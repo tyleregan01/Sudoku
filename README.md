@@ -14,7 +14,7 @@ Create a full sudoku application to keep coding knowledge fresh.
 10. Refactor: comments, TODOs, and documentation.
 11. Fixed bug 3: Only 1-9 can be added now. Attempted Things to try #1: First attempt resulted in illegal state modication. May research more later.
 Attempted minor performance improvement: don't perform comparisons when not needed - the setText() operation triggers both the removeUpdate and insertUpdate listeners. As such, there is currently no way to distinguish between a user's remove and a program's remove. Update info in TODO.
-12: Fixed bug 1: Duplicate checking always updates correctly. Also simplified/reduced code considerably. Easier to read and removed a method.
+12. Fixed bug 1: Duplicate checking always updates correctly. Also simplified/reduced code considerably. Easier to read and removed a method.
 
 
 # TODO
