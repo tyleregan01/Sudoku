@@ -56,6 +56,9 @@ public class SudokuApp {
 	private static BoardState curBoard;
 	private static Logger log;
 	private static Settings sudokuSettings;
+	
+	//Primatives
+	private static int totalRepeats = 0;
 
 	/**
 	 * Main method that runs the program.
@@ -117,7 +120,7 @@ public class SudokuApp {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				sudokuSettings.updateUnique();
-				//TODO how to keep menu from minimizing.
+				//TODO Issue 12: Don't minimize after selection.
 //				gameMenu.setPopupMenuVisible(true);
 				
 			}
@@ -125,6 +128,7 @@ public class SudokuApp {
 		newGame.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				totalRepeats = 0;
 				newBoard();
 			}
 		});
@@ -133,6 +137,7 @@ public class SudokuApp {
 			public void actionPerformed(ActionEvent e) {
 				updateDifficulty("beginner");
 				beginnerGame.setSelected(true);
+				totalRepeats = 0;
 				newBoard();
 			}
 		});
@@ -142,6 +147,7 @@ public class SudokuApp {
 			public void actionPerformed(ActionEvent e) {
 				updateDifficulty("intermediate");
 				intermediateGame.setSelected(true);
+				totalRepeats = 0;
 				newBoard();
 			}
 		});
@@ -150,6 +156,7 @@ public class SudokuApp {
 			public void actionPerformed(ActionEvent e) {
 				updateDifficulty("expert");
 				expertGame.setSelected(true);
+				totalRepeats = 0;
 				newBoard();
 			}
 		});
@@ -158,6 +165,7 @@ public class SudokuApp {
 			public void actionPerformed(ActionEvent e) {
 				updateDifficulty("blank");
 				blankGame.setSelected(true);
+				totalRepeats = 0;
 				newBoard();
 			}
 		});
@@ -302,7 +310,7 @@ public class SudokuApp {
 			 */
 			@Override
 			public void removeUpdate(DocumentEvent documentEvent) {
-				//TODO Create a flag for program initiated removals to minimize computations.
+				//TODO Issue 13: Unneeded computations. Create flag
 				log.finest("\tremoveUpdate() started");
 				if(cell.getText().equals(cell.getPrevNumber())) {
 					log.info("\tSkip insert, value did not change.");
@@ -377,7 +385,6 @@ public class SudokuApp {
 		//Initialize variables.
 		ArrayList<Integer> duplicateRows = new ArrayList<Integer>();
 		ArrayList<Integer> duplicateColumns = new ArrayList<Integer>();
-//		CellField curCell = cells[row][column];
 		String curStyle = cells[row][column].getStyle(); //The style of the main cell to check.
 		String oldNum = cells[row][column].getPrevNumber();
 		String newNum = cells[row][column].getText();
@@ -438,6 +445,7 @@ public class SudokuApp {
 	 * @param difficulty the type of new board to create.
 	 */
 	private static void newBoard() {
+		totalRepeats++;
 		String difficulty = sudokuSettings.getActiveDifficulty();
 		log.info("Create new " + difficulty + " board");
 		mainFrame.setEnabled(false);
@@ -500,7 +508,7 @@ public class SudokuApp {
 				columnSet.remove(minColumn);
 				
 				//If the board becomes unsolvable, give up and try again.
-				//TODO Improve board solving so retries don't happen.
+				//TODO Issue 14: Backtrack, don't retry.
 				if(minCellSet.size() == 0) {
 					log.warning("\tCreated unsolvable board. Retrying.");
 					mainFrame.setEnabled(true);
@@ -523,6 +531,7 @@ public class SudokuApp {
 				//populate cell and update board.
 				try {
 					curBoard.newNumberUpdate(row, minColumn, "" + newNum);
+					//TODO Issue 13: Reduce unneeded computations (need flag)
 					cells[row][minColumn].setText("" + newNum);
 					cells[row][minColumn].setPrevNumber("" + newNum);
 					setTempStyle(cells[row][minColumn], startCellStyle);
@@ -547,17 +556,15 @@ public class SudokuApp {
 		HashSet<Integer> curCellSet;
 		int repeatCount = 0;
 		boolean unique = sudokuSettings.getUnique();
-		int row = rand.nextInt(9);
+		int row = 0;
 		int column = rand.nextInt(9);
 		//Remove cells
-		//TODO Bug #2: cannot make unique expert boards
-		//TODO Improvement: More advanced tracking of what a unique board is.
+		//TODO Issue #2: cannot make unique expert boards
 		for(int i = 0; i < cellsToRemove; i++) {
 			log.fine("\tcell #" + i);
 			//Find non-empty cell
-			//TODO What if row is cycled through?
+			//TODO Issue 17: Cycle through row?
 			while(cells[row][column].getText().equals("")) {
-				row = rand.nextInt(9);
 				column = rand.nextInt(9);
 			}
 			log.fine("\tRemoving value from cell " + row + "," + column);
@@ -566,7 +573,8 @@ public class SudokuApp {
 				prevValue = cells[row][column].getText();
 			}
 			//update curBoard first, then check for unique to minimize work to undo action.
-			curBoard.removeUpdate(cells, row, column);  
+			//TODO Issue 13: remove unneeded computations. (Flag)
+			curBoard.removeUpdate(cells, row, column);
 			if(unique) {
 				curCellSet = curBoard.getCellSet(row, column);
 				if(curCellSet.size() != 1) {
@@ -579,9 +587,7 @@ public class SudokuApp {
 					log.info("\tUnique check failed. Repeat loop.");
 					i--; //Repeat this loop
 					curBoard.newNumberUpdate(row, column, prevValue);
-					//Update cell to try again
-					row = rand.nextInt(9);
-					column = rand.nextInt(9);
+					column = rand.nextInt(9); //With new column
 					continue;
 				}
 			}
@@ -594,8 +600,10 @@ public class SudokuApp {
 			} else {
 				setTempStyle(cells[row][column], normalCellStyle);
 			}
+			row = (row+1)%9;
+			column = rand.nextInt(9);
 		}
-		log.info("New board finished\n");
+		log.info("New board finished on board " + totalRepeats + " attempt " + repeatCount + "\n");
 		mainFrame.setEnabled(true);
 	}
 	
@@ -757,7 +765,7 @@ public class SudokuApp {
 	 * Update the styles of all cells based on a settings update.
 	 */
 	private static void updateCells() {
-		//TODO Add duplicate checking.
+		//TODO Issue 15: Duplicate checking.
 		String curText;
 		for(int i = 0; i < 9; i++) {
 			for (int j = 0; j < 9; j++) {
