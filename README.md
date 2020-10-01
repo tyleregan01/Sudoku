@@ -1,5 +1,5 @@
 # Goal
-Create a full sudoku application to keep coding knowledge fresh.
+Create a full sudoku application to keep coding knowledge fresh. I also hope that when I finish this program, I can turn it into an executable and let anyone/everyone have it.
 
 # Progress (Updated every time I push new code)
 1. I started off with an application that forced single numbers in each cell.
@@ -16,27 +16,5 @@ Create a full sudoku application to keep coding knowledge fresh.
 Attempted minor performance improvement: don't perform comparisons when not needed - the setText() operation triggers both the removeUpdate and insertUpdate listeners. As such, there is currently no way to distinguish between a user's remove and a program's remove. Update info in TODO.
 12. Fixed bug 1: Duplicate checking always updates correctly. Also simplified/reduced code considerably. Easier to read and removed a method.
 
-
-# TODO
-* "Reset"/"Retry" - save board states so a player can retry the same board.
-* "Mark Correct Cells" - Add another option for showing when the correct value is placed in a cell. Will be exclusive for unique boards.
-* Clock timer - Add a timer to track how long it takes a player to finish.
-* Statistics - Track games played, games finished, mistakes, etc. 
-* Success Message - Add a message area at the bottom to congratulate the player when a board is solved.
-* Random difficulty count - Use a range to randomize how many cells are removed for each difficulty.
-* "Special Boards" - Create a file containing patterned or other interesting boards and allow that as a "difficulty".
-* "Help" Menu - Menu with options for explaining how sudoku works and what each option in the game does.
-* Refactor - Refactor code every few steps to ensure well organized code.
-* Menu minimization fix - Prevent the menu from minimizing after any click.
-* Minor performance improvement: Don't perform comparisons when not needed (Flag for user vs program removeUpdates)
-* Major performance improvement: Change how boards are unsolved to ensure retries are not attempted.
-* Bug #2/Major experience improvement: Add new techniques for unsolving a board. This will make unique expert boards possible and truly expert boards.
-* Duplicate checking: Update cell styles when duplicate checking setting is changed.
-* Things to try #1: Instead of using a runnable to make updates to board while the player is playing, try setting the cell to uneditable and then make the update.
-* Things to try #2: Update the unsolving code to remove a random column for each row.
-
-
-# Known Bugs
-1. ~~If cell x creates bad cells and a cell other than x is changed from bad to good, color update can be wrong (Caused by how the check is done).~~
-2. A unique expert board is likely to cause a stack overflow error. Not sure if successful creation is possible based on current implementation.
-3. ~~If a non-number or 0 is added to a cell, an error message will be displayed to console.~~
+# Everything else
+The things I want to do as well as any bugs are now tracked in issues.
