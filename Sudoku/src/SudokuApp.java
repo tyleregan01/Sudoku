@@ -2,17 +2,10 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
-import java.util.logging.FileHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
@@ -57,7 +50,7 @@ public class SudokuApp {
 	private static Logger log;
 	private static Settings sudokuSettings;
 	
-	//Primatives
+	//Primitives
 	private static int totalRepeats = 0;
 
 	/**
@@ -66,24 +59,8 @@ public class SudokuApp {
 	 * @param args Not used
 	 */
 	public static void main(String[] args) {
-		
-		/* Initialize objects */
-		try {
-			log = Logger.getLogger("SudokuApp.Log");
-			LogManager.getLogManager().reset();
-			Handler fileHandler = new FileHandler("./SukoduApp.log");
-			LogFormat format = new LogFormat();
-			fileHandler.setLevel(Level.ALL);
-			fileHandler.setFormatter(format);
-			log.setLevel(Level.ALL);
-			log.addHandler(fileHandler);
-			log.config("Log created");
-		} catch (SecurityException | IOException e1) {
-			//Auto-generated catch block
-			e1.printStackTrace();
-			System.out.println("Log creation failed!");
-			System.exit(-1);
-		}
+
+		log = CustomLogger.createLog();
 		sudokuSettings = new Settings();
 		curBoard = new BoardState(log);
 		
@@ -116,75 +93,51 @@ public class SudokuApp {
 		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		mainFrame.setSize(450, 450);
 		//Game menu.
-		uniqueGame.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				sudokuSettings.updateUnique();
-				//TODO Issue 12: Don't minimize after selection.
+		uniqueGame.addActionListener(_ -> {
+            sudokuSettings.updateUnique();
+            //TODO Issue 12: Don't minimize after selection.
 //				gameMenu.setPopupMenuVisible(true);
-				
-			}
-		});
-		newGame.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				totalRepeats = 0;
-				newBoard();
-			}
-		});
-		beginnerGame.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				updateDifficulty("beginner");
-				beginnerGame.setSelected(true);
-				totalRepeats = 0;
-				newBoard();
-			}
-		});
+
+        });
+		newGame.addActionListener(_ -> {
+            totalRepeats = 0;
+            newBoard();
+        });
+		beginnerGame.addActionListener(_ -> {
+            updateDifficulty("beginner");
+            beginnerGame.setSelected(true);
+            totalRepeats = 0;
+            newBoard();
+        });
 		beginnerGame.setSelected(true);
-		intermediateGame.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				updateDifficulty("intermediate");
-				intermediateGame.setSelected(true);
-				totalRepeats = 0;
-				newBoard();
-			}
-		});
-		expertGame.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				updateDifficulty("expert");
-				expertGame.setSelected(true);
-				totalRepeats = 0;
-				newBoard();
-			}
-		});
-		blankGame.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				updateDifficulty("blank");
-				blankGame.setSelected(true);
-				totalRepeats = 0;
-				newBoard();
-			}
-		});
+		intermediateGame.addActionListener(_ -> {
+            updateDifficulty("intermediate");
+            intermediateGame.setSelected(true);
+            totalRepeats = 0;
+            newBoard();
+        });
+		expertGame.addActionListener(_ -> {
+            updateDifficulty("expert");
+            expertGame.setSelected(true);
+            totalRepeats = 0;
+            newBoard();
+        });
+		blankGame.addActionListener(_ -> {
+            updateDifficulty("blank");
+            blankGame.setSelected(true);
+            totalRepeats = 0;
+            newBoard();
+        });
 		//Options menu.
 		markDuplicates.setSelected(true);
-		markDuplicates.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				sudokuSettings.updateMarkDuplicates();
-				updateCells();
-			}
-		});
-		markEmpty.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				sudokuSettings.updateMarkEmpty();
-				updateCells();
-			}
-		});
+		markDuplicates.addActionListener(_ -> {
+            sudokuSettings.updateMarkDuplicates();
+            updateCells();
+        });
+		markEmpty.addActionListener(_ -> {
+            sudokuSettings.updateMarkEmpty();
+            updateCells();
+        });
 		
 		log.config("Listeners Added.");
 		
@@ -319,7 +272,7 @@ public class SudokuApp {
 				if(cell.getStyle().equals("badCellStyle")) {
 					checkCells(cell.getBox(), cell.getColumn(), cell.getRow());
 				}
-				if(cell.getText().length() == 0) { //Empty cell
+				if(cell.getText().isEmpty()) {
 					if(sudokuSettings.getMarkEmpty()) {
 						log.finer("\t\tMark empties");
 						setTempStyle(cell, emptyCellStyle);
@@ -340,7 +293,7 @@ public class SudokuApp {
 			 */
 			@Override
 			public void changedUpdate(DocumentEvent e) {
-				System.out.println("CHANGEDUPDATE from cellListener");
+				System.out.println("Change Update occurred within JTextFields from cellListener");
 				
 			}
 			
@@ -353,21 +306,19 @@ public class SudokuApp {
 			 */
 			private void changeText(CellField cell, String newText) {
 				
-				SwingUtilities.invokeLater(new Runnable() {
-					public void run() {
-						try {
-							log.finest("\t\tchangeText() started");
-							log.finest("\t\t\tSet cell to :" + newText + ":");
-							cells[cell.getRow()][cell.getColumn()].setText(newText);
-						} catch (StringIndexOutOfBoundsException e) {
-							/* This only happens some of the time that a user spams input into the same cell.
-							 * The chance of a user's last input causing this is close to 0. Just do nothing.
-							 */
-							log.warning("\t\tUser spamming input.");
-						}
-						log.finest("\t\tchangeText() finished");
-					}
-				});
+				SwingUtilities.invokeLater(() -> {
+                    try {
+                        log.finest("\t\tchangeText() started");
+                        log.finest("\t\t\tSet cell to :" + newText + ":");
+                        cells[cell.getRow()][cell.getColumn()].setText(newText);
+                    } catch (StringIndexOutOfBoundsException e) {
+                        /* This only happens some of the time that a user spams input into the same cell.
+                         * The chance of a user's last input causing this is close to 0. Just do nothing.
+                         */
+                        log.warning("\t\tUser spamming input.");
+                    }
+                    log.finest("\t\tchangeText() finished");
+                });
 			}
 		});
 	}
@@ -383,8 +334,8 @@ public class SudokuApp {
 		
 		log.finest("\t\tcheckCells() started");
 		//Initialize variables.
-		ArrayList<Integer> duplicateRows = new ArrayList<Integer>();
-		ArrayList<Integer> duplicateColumns = new ArrayList<Integer>();
+		ArrayList<Integer> duplicateRows = new ArrayList<>();
+		ArrayList<Integer> duplicateColumns = new ArrayList<>();
 		String curStyle = cells[row][column].getStyle(); //The style of the main cell to check.
 		String oldNum = cells[row][column].getPrevNumber();
 		String newNum = cells[row][column].getText();
@@ -395,13 +346,13 @@ public class SudokuApp {
 			log.finer("\t\tStep 1: Update old duplicates");
 			findDuplicates(duplicateRows, duplicateColumns, row, column, oldNum);
 			log.finer("\t\tStyle was bad. Checking old duplicates.");
-			ArrayList<Integer> tempRows = new ArrayList<Integer>();
-			ArrayList<Integer> tempColumns = new ArrayList<Integer>();
+			ArrayList<Integer> tempRows = new ArrayList<>();
+			ArrayList<Integer> tempColumns = new ArrayList<>();
 			//For each old duplicate, check if it should be updated.
 			for(int index = 0; index < duplicateRows.size(); index++) {
 				findDuplicates(tempRows, tempColumns, duplicateRows.get(index), duplicateColumns.get(index), oldNum);
 				//If no duplicates remain, update to normal
-				if(tempRows.size() == 0) {
+				if(tempRows.isEmpty()) {
 					setTempStyle(cells[duplicateRows.get(index)][duplicateColumns.get(index)], normalCellStyle);
 					log.info("\t\tCell " + duplicateRows.get(index) + "," + duplicateColumns.get(index) + " updated to normal style.");
 				}
@@ -413,7 +364,7 @@ public class SudokuApp {
 		
 		//Step 2: Check for duplicates on current value.
 		log.finer("\t\tStep 2: Check current value");
-		if(newNum.equals("")) {
+		if(newNum.isEmpty()) {
 			//The update was a removal and there is no number. Do not check for bad cells.
 			if(sudokuSettings.getMarkEmpty()) {
 				setTempStyle(cells[row][column], emptyCellStyle);
@@ -427,7 +378,7 @@ public class SudokuApp {
 		duplicateColumns.clear();
 		findDuplicates(duplicateRows, duplicateColumns, row, column, newNum);
 		//For each duplicate, update to bad style
-		if(duplicateRows.size() > 0) {
+		if(!duplicateRows.isEmpty()) {
 			setTempStyle(cells[row][column], badCellStyle);
 			for(int index = 0; index < duplicateRows.size(); index++) {
 				setTempStyle(cells[duplicateRows.get(index)][duplicateColumns.get(index)], badCellStyle);
@@ -440,9 +391,7 @@ public class SudokuApp {
 	}
 	
 	/**
-	 * Create a new board based on the given difficulty.
-	 * 
-	 * @param difficulty the type of new board to create.
+	 * Create a new board.
 	 */
 	private static void newBoard() {
 		totalRepeats++;
@@ -470,17 +419,17 @@ public class SudokuApp {
 			return;
 		}
 		//Initialize all variables outside loops.
-		HashSet<Integer> columnSet = new HashSet<Integer>();
-		HashSet<Integer> minCellSet = new HashSet<Integer>();
+		HashSet<Integer> columnSet = new HashSet<>();
+		HashSet<Integer> minCellSet = new HashSet<>();
 		int minColumn;
-		int finalIndex = 0;
-		int curIndex = 0;
+		int finalIndex;
+		int curIndex;
 		int newNum = 0;
 		Random rand = new Random();
 		//Fill cells from top to bottom.
 		for(int row = 0; row < 9; row++) {
 			log.fine("Solving row " + row);
-			columnSet.addAll(Arrays.asList(new Integer[] {0, 1, 2, 3, 4, 5, 6, 7, 8}));  //Reset to full on each row
+			columnSet.addAll(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8));  //Reset to full on each row
 			//Find the most important column 9 times.
 			for(int i = 0; i < 9; i++) {
 				log.fine("\tSolving " + i + "th column");
@@ -509,7 +458,7 @@ public class SudokuApp {
 				
 				//If the board becomes unsolvable, give up and try again.
 				//TODO Issue 14: Backtrack, don't retry.
-				if(minCellSet.size() == 0) {
+				if(minCellSet.isEmpty()) {
 					log.warning("\tCreated unsolvable board. Retrying.");
 					mainFrame.setEnabled(true);
 					newBoard();
@@ -564,7 +513,7 @@ public class SudokuApp {
 			log.fine("\tcell #" + i);
 			//Find non-empty cell
 			//TODO Issue 17: Cycle through row?
-			while(cells[row][column].getText().equals("")) {
+			while(cells[row][column].getText().isEmpty()) {
 				column = rand.nextInt(9);
 			}
 			log.fine("\tRemoving value from cell " + row + "," + column);
@@ -667,10 +616,8 @@ public class SudokuApp {
 	 * 
 	 * @param duplicateRows empty arraylist to store row information.
 	 * @param duplicateColumns empty arraylist to store column information.
-	 * @param box the box of the cell to check.
 	 * @param column the column of the cell to check.
 	 * @param row the row of the cell to check.
-	 * @param usePrevNumber whether to use the previous number of the cell or not.
 	 */
 	private static void findDuplicates(ArrayList<Integer> duplicateRows, ArrayList<Integer> duplicateColumns,
 			int row, int column, String mainNumber) {
@@ -770,7 +717,7 @@ public class SudokuApp {
 		for(int i = 0; i < 9; i++) {
 			for (int j = 0; j < 9; j++) {
 				curText = cells[i][j].getText();
-				if(curText.equals("")) {
+				if(curText.isEmpty()) {
 					if(sudokuSettings.getMarkEmpty()) {
 						setTempStyle(cells[i][j], emptyCellStyle);
 					} else {

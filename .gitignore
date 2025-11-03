@@ -31,4 +31,4 @@ bin/
 
 # Ignore log iml and log file
 Sudoku.iml
-SukoduApp.log
+SudokuApp.log

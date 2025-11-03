@@ -5,7 +5,6 @@ import java.util.logging.LogRecord;
 
 /**
  * Custom formatter to log file.
- * 
  * Copied from "Abhinav Sarkar" from https://stackoverflow.com/questions/2950704/java-util-logging-how-to-suppress-date-line
  */
 class LogFormat extends Formatter {
